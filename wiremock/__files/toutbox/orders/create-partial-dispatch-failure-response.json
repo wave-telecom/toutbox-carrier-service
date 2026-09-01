@@ -1,0 +1,12 @@
+{
+  "results": "OK",
+  "error": {
+    "message": "Pedido cadastrado, porém houve falha ao executar o despacho automático — reportar à equipe TIM/Integrador"
+  },
+  "payload": {
+    "numeroPedido": "10-0000096267",
+    "status": "RECEBIDO_COM_ALERTA"
+  },
+  "tenant": null,
+  "wl": null
+}

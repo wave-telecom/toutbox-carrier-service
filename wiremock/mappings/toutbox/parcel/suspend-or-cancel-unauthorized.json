@@ -1,0 +1,14 @@
+{
+  "priority": 100,
+  "request": {
+    "method": "PUT",
+    "urlPath": "/api/v1/Parcel/SuspendOrCancel/Single"
+  },
+  "response": {
+    "status": 401,
+    "bodyFileName": "toutbox/unauthorized-response.json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

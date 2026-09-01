@@ -1,0 +1,14 @@
+{
+  "priority": 100,
+  "request": {
+    "method": "POST",
+    "urlPath": "/api/v1/external/orders"
+  },
+  "response": {
+    "status": 401,
+    "bodyFileName": "toutbox/unauthorized-response.json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

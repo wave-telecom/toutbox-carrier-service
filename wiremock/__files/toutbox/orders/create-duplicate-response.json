@@ -1,0 +1,9 @@
+{
+  "results": "ERR",
+  "error": {
+    "message": "Pedido já existente na base de dados para o par numeroPedido + codigoRastreio informado"
+  },
+  "payload": null,
+  "tenant": null,
+  "wl": null
+}

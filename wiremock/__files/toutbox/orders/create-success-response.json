@@ -1,0 +1,10 @@
+{
+  "results": "OK",
+  "error": null,
+  "payload": {
+    "numeroPedido": "10-0000096267",
+    "status": "RECEBIDO"
+  },
+  "tenant": null,
+  "wl": null
+}

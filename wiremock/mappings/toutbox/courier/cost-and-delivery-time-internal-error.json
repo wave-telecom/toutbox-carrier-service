@@ -1,0 +1,27 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "urlPath": "/api/v1/Courier/CostAndDeliveryTime",
+    "headers": {
+      "Authorization": {
+        "equalTo": "local-dev-toutbox-api-key"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": {
+          "expression": "$.cepDestino",
+          "equalTo": "55555555"
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 500,
+    "bodyFileName": "toutbox/courier/cost-and-delivery-time-internal-error-response.json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}
