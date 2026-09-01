@@ -1,16 +1,27 @@
 # ---------------------------------------------------------------------------
 # Local development: the API running under `tsx watch` with the Node
-# inspector exposed for breakpoint debugging. No database — this service owns
-# none; it's a stateless gateway to Toutbox.
+# inspector exposed for breakpoint debugging, plus a WireMock instance faking
+# the Toutbox vendor API (ADR 0001 in tim-network-adapter) — no database,
+# since this service owns none; it's a stateless gateway to Toutbox.
 #
 #   docker compose up --build
 #
-# The API listens on http://localhost:8080 (Swagger UI at /docs) and the Node
-# inspector on 9229. Source under ./src is bind-mounted, so edits hot-reload
-# the API without rebuilding the image; node_modules lives inside the image
-# and is NOT shadowed.
+# The API listens on http://localhost:8080 (Swagger UI at /docs), the Node
+# inspector on 9229, and WireMock's admin UI/API on http://localhost:8443
+# (see wiremock/README or the "External vendor testing" section of this
+# repo's own README for the mocked scenarios and how to trigger each one).
+# Source under ./src is bind-mounted, so edits hot-reload the API without
+# rebuilding the image; node_modules lives inside the image and is NOT
+# shadowed.
 # ---------------------------------------------------------------------------
 services:
+  wiremock:
+    build:
+      context: ./wiremock
+      dockerfile: Dockerfile.wiremock
+    ports:
+      - '8443:8080' # WireMock HTTP + admin API
+
   api:
     build:
       context: .
@@ -22,6 +33,9 @@ services:
       PORT: 8080
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-change-me}
       NEW_RELIC_ENABLED: 'false'
+      TOUTBOX_BASE_URL: http://wiremock:8080
+    depends_on:
+      - wiremock
     ports:
       - '8080:8080' # API
       - '9229:9229' # Node inspector (debugger)
