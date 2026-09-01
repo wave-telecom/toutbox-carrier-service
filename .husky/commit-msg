@@ -1,0 +1,48 @@
+# Enforces the Conventional Commits + emoji convention documented in CLAUDE.md.
+
+header=$(head -n 1 "$1")
+
+# Let git's own generated messages through.
+case "$header" in
+  'Merge '*|'Revert '*|'fixup!'*|'squash!'*) exit 0 ;;
+esac
+
+emoji=${header%% *}         # "<emoji>"
+type=${header#* }           # "<type>: <description>"
+type=${type%%:*}            # "<type>"
+
+case "$type" in
+  feat)      expected=':sparkles:'   ;;
+  fix)       expected=':bug:'        ;;
+  docs)      expected=':books:'      ;;
+  test)      expected=':test_tube:'  ;;
+  refactor)  expected=':recycle:'    ;;
+  perf)      expected=':zap:'        ;;
+  build)     expected=':package:'    ;;
+  chore)     expected=':wrench:'     ;;
+  ci)        expected=':bricks:'     ;;
+  cleanup)   expected=':broom:'      ;;
+  remove)    expected=':wastebasket:';;
+  *)         expected=''             ;;
+esac
+
+if ! printf '%s' "$header" | grep -qE '^:[a-z_]+: [a-z]+: .+$' || [ -z "$expected" ]; then
+  echo "Invalid commit message:"
+  echo
+  echo "    $header"
+  echo
+  echo "  Expected  <emoji> <type>: <short description>"
+  echo "  Example   :sparkles: feat: add Payment entity and state transitions"
+  echo
+  echo "  feat :sparkles:    fix :bug:         docs :books:        test :test_tube:"
+  echo "  refactor :recycle: perf :zap:        build :package:     chore :wrench:"
+  echo "  ci :bricks:        cleanup :broom:   remove :wastebasket:"
+  exit 1
+fi
+
+if [ "$emoji" != "$expected" ]; then
+  echo "Wrong emoji for type '$type': expected '$expected', got '$emoji'."
+  echo
+  echo "    $header"
+  exit 1
+fi

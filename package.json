@@ -1,0 +1,47 @@
+{
+  "name": "toutbox-carrier-service",
+  "version": "0.1.0",
+  "description": "Chip-logistics carrier integration between the Wave network adapter layer and Toutbox.",
+  "license": "Apache-2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --import dotenv/config src/server.ts",
+    "dev:debug": "tsx watch --inspect=0.0.0.0:9229 --import dotenv/config src/server.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node -r newrelic dist/server.js",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest --run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky || true"
+  },
+  "dependencies": {
+    "@fastify/swagger": "^9.8.1",
+    "@fastify/swagger-ui": "^6.1.1",
+    "@wave-tech/framework": "^0.4.0",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.11.2",
+    "fastify-type-provider-zod": "^7.0.0",
+    "newrelic": "^14.3.6",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/newrelic": "^9.14.8",
+    "@types/node": "^22.20.1",
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^10.8.0",
+    "globals": "^17.9.0",
+    "husky": "^9.1.7",
+    "tsx": "^4.23.5",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.66.0",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
