@@ -1,0 +1,9 @@
+{
+  "results": "ERR",
+  "error": {
+    "message": "Transportadora ou código de serviço divergente do contratado"
+  },
+  "payload": null,
+  "tenant": null,
+  "wl": null
+}

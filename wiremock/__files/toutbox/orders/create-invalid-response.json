@@ -1,0 +1,9 @@
+{
+  "results": "ERR",
+  "error": {
+    "message": "Transportadora XYZ (IdInternoTransportadoraCliente) não configurada. |  Centro de distrubuição CD-0987654 não encontrado."
+  },
+  "payload": null,
+  "tenant": null,
+  "wl": null
+}

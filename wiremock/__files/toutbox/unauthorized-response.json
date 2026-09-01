@@ -1,0 +1,9 @@
+{
+  "results": "ERR",
+  "error": {
+    "message": "API Key ausente ou inválida"
+  },
+  "payload": null,
+  "tenant": null,
+  "wl": null
+}

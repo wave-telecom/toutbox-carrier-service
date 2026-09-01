@@ -1,0 +1,23 @@
+{
+  "results": "OK",
+  "error": null,
+  "payload": {
+    "dataSent": {
+      "action": "CE",
+      "nf_key": null,
+      "tracking": null,
+      "order_id": "Example-03213",
+      "mktp_order_id": null,
+      "erp_order_id": null,
+      "unique_id": null,
+      "courier_id": 89,
+      "nf_number": null
+    },
+    "responseCode": 202,
+    "requestSucceeded": false,
+    "error": "Erro ao enviar solicitação - Retorno da transportadora: '400 - BadRequest - Pedido Example-03213 não encontrado'",
+    "responseMessage": "Erro ao enviar solicitação - Retorno da transportadora: '400 - BadRequest - Pedido Example-03213 não encontrado'"
+  },
+  "tenant": null,
+  "wl": null
+}

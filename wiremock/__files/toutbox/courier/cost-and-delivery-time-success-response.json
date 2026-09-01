@@ -1,0 +1,42 @@
+{
+  "results": "OK",
+  "error": null,
+  "payload": [
+    {
+      "codigoServicoSolicitado": "100",
+      "codigoServicoUtilizado": "100",
+      "cepOrigem": "22775057",
+      "cepDestino": "01311000",
+      "formato": "Box",
+      "valorTotal": 18.9,
+      "prazo": 3,
+      "valorFrete": 18.9,
+      "infosAdicionais": {
+        "valorMaoPropria": null,
+        "valorGrandesVolumes": null,
+        "valorValorDeclarado": null,
+        "valorAvisoRecebimento": null,
+        "pesoAdicional": null,
+        "codAdmEmpresa": null,
+        "senhaAdmEmpresa": null
+      },
+      "produto": {
+        "peso": 1,
+        "comprimento": 10,
+        "altura": 10,
+        "largura": 10,
+        "diametro": 0,
+        "maoPropria": "N",
+        "avisoRecebimento": "N",
+        "formato": "Box",
+        "valorDeclarado": 0
+      },
+      "erros": [],
+      "codigoErro": null,
+      "classificacao": null,
+      "tempoRequest": null
+    }
+  ],
+  "tenant": null,
+  "wl": null
+}

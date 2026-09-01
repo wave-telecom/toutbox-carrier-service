@@ -1,0 +1,9 @@
+{
+  "results": "ERR",
+  "error": {
+    "message": "Erro interno do servidor"
+  },
+  "payload": null,
+  "tenant": null,
+  "wl": null
+}

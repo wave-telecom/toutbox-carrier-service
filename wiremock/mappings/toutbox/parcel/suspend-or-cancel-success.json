@@ -1,0 +1,19 @@
+{
+  "priority": 10,
+  "request": {
+    "method": "PUT",
+    "urlPath": "/api/v1/Parcel/SuspendOrCancel/Single",
+    "headers": {
+      "Authorization": {
+        "equalTo": "local-dev-toutbox-api-key"
+      }
+    }
+  },
+  "response": {
+    "status": 202,
+    "bodyFileName": "toutbox/parcel/suspend-or-cancel-success-response.json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

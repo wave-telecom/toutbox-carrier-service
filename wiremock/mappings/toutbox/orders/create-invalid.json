@@ -1,0 +1,27 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "POST",
+    "urlPath": "/api/v1/external/orders",
+    "headers": {
+      "Authorization": {
+        "equalTo": "local-dev-toutbox-api-key"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": {
+          "expression": "$.itens[0].frete.destinatario.cep",
+          "equalTo": "00000000"
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 400,
+    "bodyFileName": "toutbox/orders/create-invalid-response.json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

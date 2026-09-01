@@ -1,0 +1,27 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "PUT",
+    "urlPath": "/api/v1/Parcel/SuspendOrCancel/Single",
+    "headers": {
+      "Authorization": {
+        "equalTo": "local-dev-toutbox-api-key"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": {
+          "expression": "$.order_id",
+          "equalTo": "Example-03213"
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 202,
+    "bodyFileName": "toutbox/parcel/suspend-or-cancel-carrier-rejected-response.json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

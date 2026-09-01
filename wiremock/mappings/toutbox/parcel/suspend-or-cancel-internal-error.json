@@ -1,0 +1,27 @@
+{
+  "priority": 1,
+  "request": {
+    "method": "PUT",
+    "urlPath": "/api/v1/Parcel/SuspendOrCancel/Single",
+    "headers": {
+      "Authorization": {
+        "equalTo": "local-dev-toutbox-api-key"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "matchesJsonPath": {
+          "expression": "$.order_id",
+          "equalTo": "CANCEL-ERROR-01"
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": 500,
+    "bodyFileName": "toutbox/parcel/suspend-or-cancel-internal-error-response.json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}
