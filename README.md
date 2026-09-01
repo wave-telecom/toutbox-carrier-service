@@ -101,7 +101,131 @@ OpenAPI document at `/docs/json`.
 docker compose up --build
 ```
 
-Brings up the API alone — no database, since this service owns none.
+Brings up two services: `api` and `wiremock` — no database, since this service owns none. See
+[External vendor testing (WireMock)](#external-vendor-testing-wiremock) below for what `wiremock`
+fakes and how to drive each scenario.
+
+## External vendor testing (WireMock)
+
+`wiremock` fakes Toutbox's own HTTP API — SLA consulta, order creation, cancellation — so this
+service can be developed and exercised end-to-end without ever calling `courier.toutbox.com.br` /
+`production.toutbox.com.br`. This follows
+[ADR 0001](https://github.com/wave-telecom/tim-network-adapter/blob/main/docs/adr/0001-wiremock-external-system-testing.md)
+in `tim-network-adapter`: one WireMock image per network adapter repository, built from
+`wiremock/Dockerfile.wiremock`, with stub content living under `wiremock/` in this repo — colocated with the
+integration code it simulates, not a shared/central mock repo.
+
+`api` points at it via `TOUTBOX_BASE_URL=http://wiremock:8080` (already wired in
+`docker-compose.yml`). Once a `ToutboxHttpClient` exists, it must always read its base URL from
+config — never a code branch checking "am I talking to WireMock or the real vendor" (ADR 0001,
+decision driver 1). Swapping the base URL is the entire integration surface.
+
+### Layout
+
+```
+wiremock/
+├── mappings/toutbox/<resource>/*.json   # request matchers, one file per scenario
+└── __files/toutbox/<resource>/*.json    # response bodies referenced by the matchers above
+```
+
+Each `<resource>` folder (`courier`, `orders`, `parcel`) is named after **Toutbox's own endpoint**,
+never after one of our own `application/use-cases/` names — see ADR 0001, decision 6. WireMock scans
+`mappings/` recursively, so this nesting is organizational only.
+
+### Authentication
+
+Every Toutbox endpoint requires an `Authorization` header carrying the API key (confirmed against
+the Courier and Orders Swaggers referenced in the Toutbox integration contract: `name: Authorization`,
+`in: header`, no `Bearer` prefix). All stubs below require `Authorization:
+local-dev-toutbox-api-key` exactly; omitting the header or sending a different value falls through
+to a lower-priority catch-all stub that returns `401`.
+
+Toutbox has no separate token-exchange endpoint to fake — the API key travels on every business
+call, so there is no `wiremock/mappings/toutbox/auth/` folder here (unlike the illustrative example
+in ADR 0001, which assumes a vendor with its own auth/token flow). If that ever changes, add it the
+same way: its own `auth/` subfolder next to `courier/`, `orders/`, `parcel/`.
+
+### Scenarios and how to force them
+
+All examples assume `docker compose up` is running and target `http://localhost:8443` (WireMock's
+port), with `-H "Content-Type: application/json" -H "Authorization: local-dev-toutbox-api-key"`.
+
+#### Consulta de SLA — `POST /api/v1/Courier/CostAndDeliveryTime`
+
+Force a scenario via `cepDestino` (or `transportadora` for the 424 case):
+
+| To get | Send |
+| ------ | ---- |
+| `200` sucesso | any `cepDestino` not listed below |
+| `400` CEP de origem/destino inválido | `"cepDestino": "00000000"` |
+| `404` SLA/preço não encontrado | `"cepDestino": "99999999"` |
+| `424` transportadora/serviço divergente | `"transportadora": 999` |
+| `500` erro interno | `"cepDestino": "55555555"` |
+| `401` `Authorization` ausente/errado | omit the header, or send a different value |
+
+```bash
+curl -X POST http://localhost:8443/api/v1/Courier/CostAndDeliveryTime \
+  -H "Content-Type: application/json" -H "Authorization: local-dev-toutbox-api-key" \
+  -d '{"transportadora":122,"codigoServico":"100","cepOrigem":"22775057","cepDestino":"00000000","produtos":[]}'
+```
+
+#### Criação de pedido — `POST /api/v1/external/orders`
+
+Force a scenario via `itens[0].frete.destinatario.cep`:
+
+| To get | Send `itens[0].frete.destinatario.cep` |
+| ------ | --------------------------------------- |
+| `200` pedido cadastrado com sucesso | any CEP not listed below |
+| `201` cadastrado, mas falha no despacho automático | `"33333333"` |
+| `400` erro ao cadastrar (ex.: transportadora não configurada) | `"00000000"` |
+| `409` pedido já existente (duplicidade) | `"11111111"` |
+| `500` erro interno | `"22222222"` |
+| `401` `Authorization` ausente/errado | omit the header, or send a different value |
+
+> On the real Toutbox API, the `409` duplicate is triggered by a repeated `numeroPedido +
+> codigoRastreio` pair (contract §6.2), not by CEP — this mock uses CEP as the trigger for
+> consistency with the SLA endpoint above. Once the real `ToutboxHttpClient` exists, the duplicate
+> test should resend the same `numeroPedido`/`codigoRastreio` pair, not rely on a magic CEP.
+
+```bash
+curl -X POST http://localhost:8443/api/v1/external/orders \
+  -H "Content-Type: application/json" -H "Authorization: local-dev-toutbox-api-key" \
+  -d '{"itens":[{"frete":{"destinatario":{"cep":"11111111"}}}]}'
+```
+
+#### Cancelamento de ordem de envio — `PUT /api/v1/Parcel/SuspendOrCancel/Single`
+
+Force a scenario via `order_id`:
+
+| To get | Send `order_id` |
+| ------ | ---------------- |
+| `202` aceito, transportadora confirmou (`payload.requestSucceeded: true`) | any `order_id` not listed below |
+| `202` aceito, mas transportadora rejeitou (`payload.requestSucceeded: false`) | `"Example-03213"` (Toutbox's own contract example) |
+| `400` erro ao cadastrar a solicitação | `"CANCEL-INVALID-01"` |
+| `500` erro interno | `"CANCEL-ERROR-01"` |
+| `401` `Authorization` ausente/errado | omit the header, or send a different value |
+
+> Cancellation is asynchronous and never guaranteed by the call alone (contract §9) — that's why both
+> the "confirmed" and "rejected by carrier" scenarios return the same `202` status; the difference is
+> only in `payload.requestSucceeded`. A consumer of this endpoint must inspect the body, not just the
+> status code, for this one specifically.
+
+```bash
+curl -X PUT http://localhost:8443/api/v1/Parcel/SuspendOrCancel/Single \
+  -H "Content-Type: application/json" -H "Authorization: local-dev-toutbox-api-key" \
+  -d '{"action":"CE","order_id":"Example-03213","courier_id":89}'
+```
+
+### Inspecting WireMock
+
+```bash
+curl -s http://localhost:8443/__admin/mappings | jq            # all loaded stubs (17 today)
+curl -s http://localhost:8443/__admin/requests | jq             # request history + which stub answered each
+curl -s http://localhost:8443/__admin/requests/unmatched | jq   # requests that hit no stub at all
+```
+
+WireMock only reads `mappings/`/`__files/` at boot — after editing a stub, recreate the container to
+pick it up: `docker compose up -d --force-recreate wiremock`.
 
 ## Commands
 
