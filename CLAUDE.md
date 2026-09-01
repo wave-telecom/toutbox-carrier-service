@@ -22,6 +22,11 @@ god-class — is decided in
 [ADR 0000](https://github.com/wave-telecom/tim-network-adapter/blob/main/docs/adr/0000-tim-network-adapter-architecture.md)
 in `tim-network-adapter`. Read it before adding the first use case; this file summarizes its
 consequences for day-to-day work here, not the reasoning behind them.
+[ADR 0001](https://github.com/wave-telecom/tim-network-adapter/blob/main/docs/adr/0001-wiremock-external-system-testing.md)
+in the same repo governs the `wiremock/` directory (see
+[External vendor testing](#external-vendor-testing-wiremock) below) — a separate concern from ADR
+0000's Pact provider verification, even though the same running WireMock instance ends up serving
+both.
 
 Technically it is a TypeScript REST API built on Fastify, following Clean Architecture without a
 `domain/` layer. Validation is done with Zod, observability with New Relic, tests with Vitest, and
@@ -210,17 +215,46 @@ Always run `npm run lint` and `npm test` before declaring a task done.
 
 ## Docker
 
-`docker compose up --build` brings up the API alone — no database, since this service owns none.
+`docker compose up --build` brings up two services: `api` and `wiremock` — no database, since this
+service owns none.
 
 The `Dockerfile` is multi-stage (`builder` → `runner`) and the container is started directly with
 `npm start` (`node -r newrelic dist/server.js`). The image does **not** need an entrypoint script —
 do not add a `docker-entrypoint.sh`.
 
+## External vendor testing (WireMock)
+
+`wiremock/Dockerfile.wiremock` builds a second image, from its sibling `mappings/` + `__files/`, that
+fakes Toutbox's own HTTP API. This is [ADR 0001](https://github.com/wave-telecom/tim-network-adapter/blob/main/docs/adr/0001-wiremock-external-system-testing.md)
+in `tim-network-adapter` — read it before adding or restructuring a stub. The same image serves
+local development (`docker compose up`, `api`'s `TOUTBOX_BASE_URL` already points at it), CI, and
+(incidentally) ADR 0000's Pact provider verification — one set of mappings, never duplicated.
+
+Rules that matter when touching `wiremock/`:
+
+- **A stub folder is named after Toutbox's own endpoint** (`courier`, `orders`, `parcel`), never
+  after one of our `application/use-cases/` names (ADR 0001, decision 6). A single use case calling
+  two vendor endpoints still produces two stubs, one per vendor resource.
+- **`ToutboxHttpClient` must never know WireMock exists.** It only ever reads `TOUTBOX_BASE_URL`
+  from config (ADR 0001, driver 1) — no `if (NODE_ENV === 'test')` branch pointing at WireMock by
+  name.
+- **Fake the vendor's auth too, not just business endpoints** (ADR 0001, decision 7) — otherwise a
+  real client never gets past its own auth step to reach the stub under test. Toutbox's auth is a
+  static API key on the `Authorization` header of every business call (no separate token exchange),
+  so here that means every business stub's `request.headers.Authorization` requires the sentinel
+  key, plus a low-priority catch-all per resource returning `401` for anything else — not a
+  dedicated `auth/` folder. Add a real `auth/` folder only if Toutbox ever grows an actual
+  token-exchange endpoint.
+- Full scenario tables (which sentinel field/value forces which status) and how to run it locally
+  live in [`README.md`](README.md#external-vendor-testing-wiremock), not duplicated here.
+
 ## Environment
 
 Copy `.env.example` to `.env`. The Zod schema in `src/infrastructure/config/env.ts` is the source of
-truth for which variables are required — add new ones there (e.g. Toutbox's base URL and auth
-credentials, once the first use case needs them). `INTERNAL_API_KEY` is required.
+truth for which variables are required — add new ones there (e.g. `TOUTBOX_BASE_URL` and Toutbox
+auth credentials, once the first use case needs them; `docker-compose.yml`'s `api` service already
+sets `TOUTBOX_BASE_URL` for local dev, pointing at `wiremock`, ahead of any code consuming it).
+`INTERNAL_API_KEY` is required.
 
 ## Observability, logging & request context
 
@@ -274,6 +308,11 @@ response pair can be traced back to the inbound `wave-delivery-api` request that
   `GET /management/health`.
 - Don't add a Docker entrypoint script.
 - Don't swap in a different package manager or commit a second lockfile.
+- Don't branch code on "am I talking to WireMock" (`if (NODE_ENV === 'test') ...` pointing at a
+  fake base URL). `ToutboxHttpClient` only ever reads `TOUTBOX_BASE_URL` from config — see
+  [External vendor testing](#external-vendor-testing-wiremock).
+- Don't name a `wiremock/mappings/toutbox/` folder after one of our own use cases — name it after
+  the Toutbox endpoint it fakes (`courier`, `orders`, `parcel`).
 
 ## Git / commits
 
