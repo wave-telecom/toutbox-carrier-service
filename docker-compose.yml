@@ -1,0 +1,29 @@
+# ---------------------------------------------------------------------------
+# Local development: the API running under `tsx watch` with the Node
+# inspector exposed for breakpoint debugging. No database — this service owns
+# none; it's a stateless gateway to Toutbox.
+#
+#   docker compose up --build
+#
+# The API listens on http://localhost:8080 (Swagger UI at /docs) and the Node
+# inspector on 9229. Source under ./src is bind-mounted, so edits hot-reload
+# the API without rebuilding the image; node_modules lives inside the image
+# and is NOT shadowed.
+# ---------------------------------------------------------------------------
+services:
+  api:
+    build:
+      context: .
+      target: builder
+    command: npm run dev:debug
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 8080
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-change-me}
+      NEW_RELIC_ENABLED: 'false'
+    ports:
+      - '8080:8080' # API
+      - '9229:9229' # Node inspector (debugger)
+    volumes:
+      - ./src:/app/src

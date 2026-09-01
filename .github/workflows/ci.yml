@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required to mint the OIDC token for the coverage API
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      # `npm ci` (not `npm install`): installs exactly the committed lockfile, so
+      # CI resolves the same dependency tree as the Docker image build.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Publish coverage report
+        if: always()
+        uses: wave-telecom/wave-github-actions/actions/vitest-coverage-report@main
+        with:
+          api-url: https://tide.bemobiwave.com/api/coverage
+          audience: https://github.com/wave-telecom
+          fail-on-error: 'false'
+          label: unit
