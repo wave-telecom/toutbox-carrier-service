@@ -34,6 +34,9 @@ services:
       INTERNAL_API_KEY: ${INTERNAL_API_KEY:-change-me}
       NEW_RELIC_ENABLED: 'false'
       TOUTBOX_BASE_URL: http://wiremock:8080
+      # Matches the `Authorization` sentinel every business stub under
+      # wiremock/mappings/toutbox/ requires (see the WireMock mappings).
+      TOUTBOX_API_KEY: local-dev-toutbox-api-key
     depends_on:
       - wiremock
     ports:

@@ -40,7 +40,7 @@ infrastructure  →  application
 
 - **`src/application/use-cases/`** — Each Toutbox operation as a **type**, never a class:
   `ProviderUseCase<TInput, TOutput, TError>` from `@wave-tech/framework/contracts`. The request/
-  response/error types come from `@wave-tech/framework/contracts/delivery`, the same shared contract
+  response/error types come from `@wave-tech/framework/contracts`, the same shared contract
   package `wave-delivery-api` depends on — nothing is declared locally that the contract already
   exports.
 - **`src/infrastructure/vendor/toutbox/`** — `toutbox-http-client.ts` (transport only) and
@@ -70,7 +70,7 @@ src/
 
 ### Adding a feature
 
-1. Add the request/response/error types to `@wave-tech/framework/contracts/delivery`, if they don't
+1. Add the request/response/error types to `@wave-tech/framework/contracts`, if they don't
    exist yet.
 2. Declare the operation's **type** in `application/use-cases/<name>/<name>.ts`.
 3. Implement it in `infrastructure/vendor/toutbox/usecases/toutbox-<name>.ts`.
@@ -290,7 +290,7 @@ and load balancer health checks. It is never served at `/health` and never behin
 ## API documentation
 
 Routes declare their `body`, `params`, `querystring` and `response` schemas as the shared **Zod
-schemas** from `@wave-tech/framework/contracts/delivery` — the same objects the use cases parse.
+schemas** from `@wave-tech/framework/contracts` — the same objects the use cases parse.
 `fastify-type-provider-zod` validates requests, serialises responses and feeds `@fastify/swagger`
 with JSON Schema emitted natively by Zod 4, so the OpenAPI document, the runtime validation and the
 TypeScript handler types all come from one definition.
