@@ -6,6 +6,10 @@ import { errorHandler, notFoundHandler } from './error-handler.js';
 import { registerOpenApi } from './openapi.js';
 import { registerApiKeyAuth } from './auth/api-key-auth.js';
 import { managementRoutes } from './routes/management-routes.js';
+import { carrierCreateDeliveryOrderRoute } from './routes/carrier-create-delivery-order-route.js';
+import { carrierCancelDeliveryOrderRoute } from './routes/carrier-cancel-delivery-order-route.js';
+import type { CarrierCreateDeliveryOrder } from '../../application/use-cases/carrier-create-delivery-order/carrier-create-delivery-order.js';
+import type { CarrierCancelDeliveryOrder } from '../../application/use-cases/carrier-cancel-delivery-order/carrier-cancel-delivery-order.js';
 
 /**
  * Concrete adapters the application is built from. Per operation, `server.ts`
@@ -16,8 +20,8 @@ import { managementRoutes } from './routes/management-routes.js';
 export interface AppDeps {
   /** Internal API key required on the `x-api-key` header for protected routes. */
   apiKey: string;
-  // Add one entry per operation, typed with its `application/use-cases/` contract:
-  //   createDeliveryOrder: CarrierCreateDeliveryOrder;
+  createDeliveryOrder: CarrierCreateDeliveryOrder;
+  cancelDeliveryOrder: CarrierCancelDeliveryOrder;
 }
 
 /**
@@ -72,14 +76,8 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   registerApiKeyAuth(app, { apiKey: deps.apiKey });
 
   void app.register(managementRoutes);
-
-  // Feature routes go here, one per Toutbox operation. Each use case
-  // implementation is already built in `deps` (wired in server.ts) — register
-  // the route plugin factory that consumes it, always through `app.register`,
-  // never `app.get(...)` on this instance, or the route is invisible to the
-  // OpenAPI generator:
-  //
-  //   void app.register(carrierCreateDeliveryOrderRoute({ createDeliveryOrder: deps.createDeliveryOrder }));
+  void app.register(carrierCreateDeliveryOrderRoute({ createDeliveryOrder: deps.createDeliveryOrder }));
+  void app.register(carrierCancelDeliveryOrderRoute({ cancelDeliveryOrder: deps.cancelDeliveryOrder }));
 
   return app;
 }

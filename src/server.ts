@@ -1,6 +1,9 @@
 import { Logger } from '@wave-tech/framework/core';
 import { loadEnv } from './infrastructure/config/env.js';
 import { buildApp } from './infrastructure/http/app.js';
+import { ToutboxHttpClient } from './infrastructure/vendor/toutbox/toutbox-http-client.js';
+import { ToutboxCreateDeliveryOrder } from './infrastructure/vendor/toutbox/usecases/toutbox-create-delivery-order.js';
+import { ToutboxCancelDeliveryOrder } from './infrastructure/vendor/toutbox/usecases/toutbox-cancel-delivery-order.js';
 
 /**
  * Composition root: load config, wire concrete adapters into the application,
@@ -10,17 +13,12 @@ async function main(): Promise<void> {
   const env = loadEnv();
   Logger.initialize(env.NEW_RELIC_APP_NAME);
 
-  // `buildApp` takes concrete adapters — Toutbox use case implementations,
-  // built from a `ToutboxHttpClient` — and wires them to their `application/`
-  // type and route. Construct the vendor HTTP client and each operation here:
-  //
-  //   const toutboxHttpClient = new ToutboxHttpClient(env.toutboxConfig);
-  //   const createDeliveryOrder: CarrierCreateDeliveryOrder =
-  //     new ToutboxCreateDeliveryOrder(toutboxHttpClient);
-  //
-  // then pass it below.
+  const toutboxHttpClient = new ToutboxHttpClient(env.TOUTBOX_BASE_URL, env.TOUTBOX_API_KEY);
+
   const app = buildApp({
     apiKey: env.INTERNAL_API_KEY,
+    createDeliveryOrder: new ToutboxCreateDeliveryOrder(toutboxHttpClient),
+    cancelDeliveryOrder: new ToutboxCancelDeliveryOrder(toutboxHttpClient),
   });
 
   const shutdown = async (signal: string): Promise<void> => {

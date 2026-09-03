@@ -23,6 +23,8 @@ export const ErrorTypes = {
   CONFLICT: `${ERROR_TYPE_BASE_URI}/conflict`,
   INVALID_STATUS_TRANSITION: `${ERROR_TYPE_BASE_URI}/invalid-status-transition`,
   OPERATION_NOT_ALLOWED: `${ERROR_TYPE_BASE_URI}/operation-not-allowed`,
+  NOT_IMPLEMENTED: `${ERROR_TYPE_BASE_URI}/not-implemented`,
+  BAD_GATEWAY: `${ERROR_TYPE_BASE_URI}/bad-gateway`,
   INTERNAL_SERVER_ERROR: `${ERROR_TYPE_BASE_URI}/internal-server-error`,
 } as const;
 
@@ -109,7 +111,42 @@ export class OperationNotAllowedHttpError extends HttpError {
   readonly type = ErrorTypes.OPERATION_NOT_ALLOWED;
 }
 
+export class NotImplementedError extends HttpError {
+  readonly status = 501;
+  readonly type = ErrorTypes.NOT_IMPLEMENTED;
+}
+
+export class BadGatewayError extends HttpError {
+  readonly status = 502;
+  readonly type = ErrorTypes.BAD_GATEWAY;
+}
+
 export class InternalServerError extends HttpError {
   readonly status = 500;
   readonly type = ErrorTypes.INTERNAL_SERVER_ERROR;
+}
+
+/**
+ * Maps a carrier use case's own `{ status, message }` failure (see
+ * `application/carrier-operation-error.ts`) to the matching {@link HttpError}
+ * subclass. Purely an HTTP-boundary concern — a use case decides *which*
+ * status and message describe its own failure; this only decides which
+ * concrete RFC 9457 `type`/title go with that status. Used by both the
+ * create and cancel routes.
+ */
+export function httpErrorForStatus(status: number, message: string): HttpError {
+  switch (status) {
+    case 400:
+      return new ValidationError(message);
+    case 409:
+      return new ConflictError(message);
+    case 422:
+      return new OperationNotAllowedHttpError(message);
+    case 501:
+      return new NotImplementedError(message);
+    case 502:
+      return new BadGatewayError(message);
+    default:
+      return new InternalServerError(message);
+  }
 }
