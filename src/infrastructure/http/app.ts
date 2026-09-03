@@ -8,8 +8,10 @@ import { registerApiKeyAuth } from './auth/api-key-auth.js';
 import { managementRoutes } from './routes/management-routes.js';
 import { carrierCreateDeliveryOrderRoute } from './routes/carrier-create-delivery-order-route.js';
 import { carrierCancelDeliveryOrderRoute } from './routes/carrier-cancel-delivery-order-route.js';
+import { toutboxDeliveryWebhookRoute } from './routes/toutbox-delivery-webhook-route.js';
 import type { CarrierCreateDeliveryOrder } from '../../application/use-cases/carrier-create-delivery-order/carrier-create-delivery-order.js';
 import type { CarrierCancelDeliveryOrder } from '../../application/use-cases/carrier-cancel-delivery-order/carrier-cancel-delivery-order.js';
+import type { ProcessDeliveryWebhook } from '../vendor/toutbox/usecases/toutbox-process-delivery-webhook.js';
 
 /**
  * Concrete adapters the application is built from. Per operation, `server.ts`
@@ -22,6 +24,9 @@ export interface AppDeps {
   apiKey: string;
   createDeliveryOrder: CarrierCreateDeliveryOrder;
   cancelDeliveryOrder: CarrierCancelDeliveryOrder;
+  processDeliveryWebhook: ProcessDeliveryWebhook;
+  /** Separate API key authenticating Toutbox's own webhook call — see {@link toutboxDeliveryWebhookRoute}. */
+  webhookApiKey: string;
 }
 
 /**
@@ -73,11 +78,23 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   // OpenAPI must be registered before routes so the generator's onRoute hook is
   // in place and captures every route's schema.
   registerOpenApi(app);
-  registerApiKeyAuth(app, { apiKey: deps.apiKey });
+  // The Toutbox webhook authenticates itself via its own key (see
+  // toutboxDeliveryWebhookRoute) — it's listed here so the global
+  // INTERNAL_API_KEY hook doesn't also gate it.
+  registerApiKeyAuth(app, {
+    apiKey: deps.apiKey,
+    publicPaths: ['/', '/management/health', '/docs', '/webhook/delivery-orders'],
+  });
 
   void app.register(managementRoutes);
   void app.register(carrierCreateDeliveryOrderRoute({ createDeliveryOrder: deps.createDeliveryOrder }));
   void app.register(carrierCancelDeliveryOrderRoute({ cancelDeliveryOrder: deps.cancelDeliveryOrder }));
+  void app.register(
+    toutboxDeliveryWebhookRoute({
+      processDeliveryWebhook: deps.processDeliveryWebhook,
+      webhookApiKey: deps.webhookApiKey,
+    }),
+  );
 
   return app;
 }
