@@ -7,14 +7,18 @@ Guidance for Claude Code (and other AI assistants) when working in this reposito
 `toutbox-carrier-service` is the network adapter for Toutbox, a third-party chip-logistics vendor.
 It is a reusable-beyond-TIM integration in Wave's network adapter architecture: Toutbox is not a TIM
 system, so it lives in its own repository (cloned from `wave-api-template`) rather than as a module
-inside `tim-network-adapter`. It exposes the `CarrierProvider`-facing HTTP contract that
-`wave-delivery-api` (and any future BSS module needing the same carrier) calls, and translates each
-request into Toutbox's own wire format and back.
+inside `tim-network-adapter`. It exposes the HTTP contract that `wave-delivery-api`'s (and any future BSS
+module's) vendor-agnostic `CarrierService` implementation calls, and translates each request into
+Toutbox's own wire format and back — the consuming BSS module never knows it is Toutbox specifically on
+the other end of that call, only that it is calling "the configured external carrier service".
 
-**Current state: this is a skeleton.** No use case exists yet — `application/use-cases/` and
-`infrastructure/vendor/toutbox/usecases/` are empty. The infrastructure is in place: Fastify app, Zod
-validation, OpenAPI, API key auth, RFC 9457 error handling, env config, Docker — ready for the first
-operation (e.g. `CarrierCreateDeliveryOrder`) to be added.
+**Current state:** two operations are implemented — `CarrierCreateDeliveryOrder`
+(`POST /courier/delivery-orders`) and `CarrierCancelDeliveryOrder`
+(`POST /courier/delivery-orders/:id/cancel`), each against Toutbox's own
+`POST /api/v1/external/orders` and `PUT /api/v1/Parcel/SuspendOrCancel/Single`. Both currently only
+support `resourceType: "SIM"` (Toutbox's payload shape is fixed chip-logistics fields); any other
+`resourceType` returns `NOT_IMPLEMENTED` (501) without calling Toutbox at all. Use these two as the
+template for the next operation.
 
 The full rationale for this repository's shape — why it has no `domain/` layer, why
 `application/use-cases/` holds types and not classes, why there is no single `ToutboxClient`
@@ -43,13 +47,12 @@ infrastructure  →  application
 ```
 
 - `src/application/use-cases/` — Each Toutbox operation is declared as a **type**, never a class:
-  `type CarrierCreateDeliveryOrder = ProviderUseCase<TInput, TOutput, TError>`, with
-  `ProviderUseCase` imported from `@wave-tech/framework/contracts`. The request/response/error types
-  themselves (`CarrierCreateDeliveryOrderRequest`, `CarrierDeliveryOrderResponse`,
-  `CarrierDeliveryOrderError`, ...) are *not* declared here either — they're imported from
-  `@wave-tech/framework/contracts/delivery`, the shared contract package `wave-delivery-api` also
-  depends on. This folder contributes **no runtime code**: just a type alias per operation, colocated
-  with nothing else, because there's nothing else to test in isolation here.
+  `type CarrierCreateDeliveryOrder = ProviderUseCase<TInput, TOutput, TError>`. Both `ProviderUseCase`
+  and the operation's own request/response/error types (`CarrierCreateDeliveryOrderRequest`,
+  `CarrierCreateDeliveryOrderResponse`, `CarrierCreateDeliveryOrderError`, ...) come from the single
+  shared `@wave-tech/framework/contracts` subpath — the same one `wave-delivery-api` depends on. This
+  folder contributes **no runtime code**: just a type alias per operation, colocated with nothing
+  else, because there's nothing else to test in isolation here.
 - `src/infrastructure/vendor/toutbox/` — `toutbox-http-client.ts` (transport only: base URL, auth/
   token caching, retry — zero business/mapping logic) and `usecases/` (one implementation file per
   operation, e.g. `toutbox-create-delivery-order.ts`, each `implements` its corresponding
@@ -66,7 +69,7 @@ The composition root is `src/server.ts`: it loads config via `loadEnv()`, constr
 ## When adding the first (or a new) use case
 
 1. Add the request/response/error types for the operation to
-   `@wave-tech/framework/contracts/delivery` (or the relevant domain), if they don't exist yet — see
+   `@wave-tech/framework/contracts` (or the relevant domain), if they don't exist yet — see
    ADR 0000, decision C, for the schema-first authoring pattern and the `Carrier`-prefixed naming
    convention.
 2. Declare the operation's **type** in `src/application/use-cases/<name>/<name>.ts`:
@@ -134,7 +137,7 @@ platform-wide contract shared by all `wave-*-api` services — do not deviate he
 ### API documentation (OpenAPI)
 
 An OpenAPI 3 document is generated from the routes' **Zod schemas** (the same shared schemas from
-`@wave-tech/framework/contracts/delivery`) and served by `@fastify/swagger`, registered in
+`@wave-tech/framework/contracts`) and served by `@fastify/swagger`, registered in
 `http/openapi.ts`. Swagger UI is served at `/docs`, the raw spec at `/docs/json`.
 
 **Zod is the single source of truth.** A route declares its `body`, `params`, `querystring` and
@@ -251,10 +254,10 @@ Rules that matter when touching `wiremock/`:
 ## Environment
 
 Copy `.env.example` to `.env`. The Zod schema in `src/infrastructure/config/env.ts` is the source of
-truth for which variables are required — add new ones there (e.g. `TOUTBOX_BASE_URL` and Toutbox
-auth credentials, once the first use case needs them; `docker-compose.yml`'s `api` service already
-sets `TOUTBOX_BASE_URL` for local dev, pointing at `wiremock`, ahead of any code consuming it).
-`INTERNAL_API_KEY` is required.
+truth for which variables are required — add new ones there. `INTERNAL_API_KEY`, `TOUTBOX_BASE_URL`
+and `TOUTBOX_API_KEY` (Toutbox's static `Authorization` header value) are all required;
+`docker-compose.yml`'s `api` service sets both Toutbox variables for local dev, pointing at the
+`wiremock` service with the sentinel key its stubs expect.
 
 ## Observability, logging & request context
 
@@ -283,11 +286,19 @@ response pair can be traced back to the inbound `wave-delivery-api` request that
 - `application/use-cases/` has no runtime code, so there is nothing to unit test there — a type alias
   needs no test.
 - The real logic — and its tests — live in `infrastructure/vendor/toutbox/usecases/`: a
-  `toutbox-<name>.test.ts` against a fake `ToutboxHttpClient` (`{ post: async () => ({ ok: true,
-  value: rawToutboxFixture }) }`), asserting the Toutbox-shape ↔ Wave-shape mapping directly.
+  `toutbox-<name>.test.ts` against a fake `ToutboxHttpClient` (`{ post: async () => ({ status: 200,
+  body: rawToutboxFixture }) }`), asserting the Toutbox-shape ↔ Wave-shape mapping directly. See
+  `toutbox-create-delivery-order.test.ts`/`toutbox-cancel-delivery-order.test.ts` for the pattern.
+- Route-level tests (`*-route.test.ts`) exercise `buildApp` with a fake use case, asserting the
+  `Result` → HTTP status mapping done by `httpErrorForStatus` in `infrastructure/http/errors/http-error.ts`.
 - Test files live alongside the code: `foo.ts` + `foo.test.ts`.
 - For any new use case, add: happy path, the vendor-error mapping path, and (if async) the
   rollback/error-callback path.
+- **Pact provider verification** (`pact-provider-verification.pact.test.ts`) verifies this service
+  against `wave-delivery-api`'s consumer contract end to end — real app, real WireMock (via
+  Testcontainers, built from `wiremock/Dockerfile.wiremock`). Runs as part of `npm test`, but skips
+  itself when `PACT_BROKER_URL` isn't set, so it stays optional outside CI or an environment with a
+  broker configured.
 
 ## What NOT to do
 
@@ -297,7 +308,7 @@ response pair can be traced back to the inbound `wave-delivery-api` request that
 - Don't write a class in `application/use-cases/` — it's types only.
 - Don't let `toutbox-http-client.ts` grow business-shaped methods (`createShipment()`, etc.) — that
   belongs in `infrastructure/vendor/toutbox/usecases/`.
-- Don't hand-roll a request/response type — import it from `@wave-tech/framework/contracts/delivery`
+- Don't hand-roll a request/response type — import it from `@wave-tech/framework/contracts`
   and derive nothing locally that the shared contract already exports.
 - Don't bypass Zod for input parsing.
 - Don't hand-write JSON Schema in a route, and don't register schemas via `app.addSchema` / `$ref`.
