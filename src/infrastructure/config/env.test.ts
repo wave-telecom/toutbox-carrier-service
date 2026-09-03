@@ -3,11 +3,24 @@ import { loadEnv } from './env.js';
 
 const base = {
   INTERNAL_API_KEY: 'key',
+  TOUTBOX_BASE_URL: 'https://toutbox.example.com',
+  TOUTBOX_API_KEY: 'toutbox-key',
 } as NodeJS.ProcessEnv;
 
 describe('loadEnv', () => {
   it('fails when INTERNAL_API_KEY is missing', () => {
-    expect(() => loadEnv({} as NodeJS.ProcessEnv)).toThrow();
+    expect(() =>
+      loadEnv({
+        TOUTBOX_BASE_URL: base.TOUTBOX_BASE_URL,
+        TOUTBOX_API_KEY: base.TOUTBOX_API_KEY,
+      } as NodeJS.ProcessEnv),
+    ).toThrow();
+  });
+
+  it('fails when TOUTBOX_BASE_URL or TOUTBOX_API_KEY is missing', () => {
+    expect(() =>
+      loadEnv({ INTERNAL_API_KEY: 'key' } as NodeJS.ProcessEnv),
+    ).toThrow();
   });
 
   it('applies the documented defaults', () => {
