@@ -2,6 +2,11 @@
 # green on `main`. Deploying the pushed image is owned by `wave-foundation-iac`,
 # not by this workflow.
 #
+# Also builds and pushes the WireMock test double (wiremock/Dockerfile.wiremock)
+# as its own image, per tim-network-adapter ADR 0001 ("each network adapter
+# owns its own CD for this image") — same registry, alongside the application
+# image, so wave-foundation-iac has something to deploy for both.
+#
 # Requires, on the repository:
 #   secrets — GCP_CREDENTIALS
 #   vars    — GCP_FOUNDATION_REGION, GCP_FOUNDATION_PROJECT_ID, GAR_REPOSITORY_DEV
@@ -19,6 +24,9 @@ on:
 env:
   # Image name in Artifact Registry. `scripts/rename-service.sh` rewrites it.
   SERVICE_NAME: toutbox-carrier-service
+  # WireMock test double image name — kept distinct from SERVICE_NAME since
+  # both live in the same Artifact Registry repository.
+  WIREMOCK_IMAGE_NAME: toutbox-carrier-wiremock
 
 jobs:
   deploy:
@@ -57,3 +65,11 @@ jobs:
           IMAGE="${{ vars.GCP_FOUNDATION_REGION }}-docker.pkg.dev/${{ vars.GCP_FOUNDATION_PROJECT_ID }}/${{ vars.GAR_REPOSITORY_DEV }}/${{ env.SERVICE_NAME }}:${{ github.ref_name }}"
           docker build -t "$IMAGE" .
           docker push "$IMAGE"
+
+      # Build context is the wiremock/ directory itself, not the repo root —
+      # the image's only inputs are that directory's contents (ADR 0001).
+      - name: Build and push WireMock image
+        run: |
+          WIREMOCK_IMAGE="${{ vars.GCP_FOUNDATION_REGION }}-docker.pkg.dev/${{ vars.GCP_FOUNDATION_PROJECT_ID }}/${{ vars.GAR_REPOSITORY_DEV }}/${{ env.WIREMOCK_IMAGE_NAME }}:${{ github.ref_name }}"
+          docker build -f wiremock/Dockerfile.wiremock -t "$WIREMOCK_IMAGE" ./wiremock
+          docker push "$WIREMOCK_IMAGE"
