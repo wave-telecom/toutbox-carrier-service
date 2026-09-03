@@ -12,6 +12,9 @@ const envSchema = z.object({
   INTERNAL_API_KEY: z.string().min(1, 'INTERNAL_API_KEY is required'),
   TOUTBOX_BASE_URL: z.url('TOUTBOX_BASE_URL is required'),
   TOUTBOX_API_KEY: z.string().min(1, 'TOUTBOX_API_KEY is required'),
+  TOUTBOX_WEBHOOK_API_KEY: z.string().min(1, 'TOUTBOX_WEBHOOK_API_KEY is required'),
+  WAVE_DELIVERY_API_BASE_URL: z.url('WAVE_DELIVERY_API_BASE_URL is required'),
+  WAVE_DELIVERY_API_KEY: z.string().min(1, 'WAVE_DELIVERY_API_KEY is required'),
   NEW_RELIC_APP_NAME: z.string().default('toutbox-carrier-service'),
   NEW_RELIC_LICENSE_KEY: z.string().optional(),
   NEW_RELIC_ENABLED: z

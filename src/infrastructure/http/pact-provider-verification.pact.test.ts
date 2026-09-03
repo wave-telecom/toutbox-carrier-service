@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { Verifier } from '@pact-foundation/pact';
+import { success } from '@wave-tech/framework/core';
 import { GenericContainer, type StartedTestContainer } from 'testcontainers';
 import { afterAll, beforeAll, describe, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -52,6 +53,8 @@ describe.runIf(Boolean(PACT_BROKER_URL))('toutbox-carrier-service (Pact provider
       apiKey: 'pact-verification-key',
       createDeliveryOrder: new ToutboxCreateDeliveryOrder(toutboxHttpClient),
       cancelDeliveryOrder: new ToutboxCancelDeliveryOrder(toutboxHttpClient),
+      processDeliveryWebhook: { execute: async () => success(undefined) },
+      webhookApiKey: 'pact-webhook-key',
     });
     await app.listen({ host: '127.0.0.1', port: 0 });
     const address = app.server.address();
