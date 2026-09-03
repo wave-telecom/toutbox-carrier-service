@@ -37,6 +37,13 @@ services:
       # Matches the `Authorization` sentinel every business stub under
       # wiremock/mappings/toutbox/ requires (see the WireMock mappings).
       TOUTBOX_API_KEY: local-dev-toutbox-api-key
+      TOUTBOX_WEBHOOK_API_KEY: ${TOUTBOX_WEBHOOK_API_KEY:-change-me}
+      # Points at a sibling `wave-delivery-api` stack's own `docker compose
+      # up` (its api service listens on :3000 on the host); `host.docker.internal`
+      # reaches the host from inside this container. The key must match that
+      # repo's own INTERNAL_API_KEY (its docker-compose.yml / .env.example).
+      WAVE_DELIVERY_API_BASE_URL: ${WAVE_DELIVERY_API_BASE_URL:-http://host.docker.internal:3000}
+      WAVE_DELIVERY_API_KEY: ${WAVE_DELIVERY_API_KEY:-change-me}
     depends_on:
       - wiremock
     ports:
