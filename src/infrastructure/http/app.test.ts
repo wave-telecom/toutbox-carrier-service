@@ -1,13 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
-import { Logger, getHookCorrelationId, failure } from '@wave-tech/framework/core';
+import { Logger, getHookCorrelationId, failure, success } from '@wave-tech/framework/core';
 import { buildApp } from './app.js';
 import { API_KEY_HEADER } from './auth/api-key-auth.js';
 import { ErrorTypes } from './errors/http-error.js';
 import type { CarrierCreateDeliveryOrder } from '../../application/use-cases/carrier-create-delivery-order/carrier-create-delivery-order.js';
 import type { CarrierCancelDeliveryOrder } from '../../application/use-cases/carrier-cancel-delivery-order/carrier-cancel-delivery-order.js';
+import type { ProcessDeliveryWebhook } from '../vendor/toutbox/usecases/toutbox-process-delivery-webhook.js';
 
 const API_KEY = 'test-secret-key';
+const WEBHOOK_API_KEY = 'test-webhook-key';
 
 /** Never actually exercised by this suite's own tests — a trivial stub is enough. */
 const createDeliveryOrder: CarrierCreateDeliveryOrder = {
@@ -16,12 +18,21 @@ const createDeliveryOrder: CarrierCreateDeliveryOrder = {
 const cancelDeliveryOrder: CarrierCancelDeliveryOrder = {
   execute: async () => failure({ status: 500, message: 'not used in this test file' }),
 };
+const processDeliveryWebhook: ProcessDeliveryWebhook = {
+  execute: async () => success(undefined),
+};
 
 describe('buildApp', () => {
   let app: FastifyInstance;
 
   beforeEach(async () => {
-    app = buildApp({ apiKey: API_KEY, createDeliveryOrder, cancelDeliveryOrder });
+    app = buildApp({
+      apiKey: API_KEY,
+      createDeliveryOrder,
+      cancelDeliveryOrder,
+      processDeliveryWebhook,
+      webhookApiKey: WEBHOOK_API_KEY,
+    });
     await app.ready();
   });
 

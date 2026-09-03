@@ -4,6 +4,8 @@ import { buildApp } from './infrastructure/http/app.js';
 import { ToutboxHttpClient } from './infrastructure/vendor/toutbox/toutbox-http-client.js';
 import { ToutboxCreateDeliveryOrder } from './infrastructure/vendor/toutbox/usecases/toutbox-create-delivery-order.js';
 import { ToutboxCancelDeliveryOrder } from './infrastructure/vendor/toutbox/usecases/toutbox-cancel-delivery-order.js';
+import { ToutboxProcessDeliveryWebhook } from './infrastructure/vendor/toutbox/usecases/toutbox-process-delivery-webhook.js';
+import { WaveDeliveryApiHttpClient } from './infrastructure/vendor/wave-delivery-api/wave-delivery-api-http-client.js';
 
 /**
  * Composition root: load config, wire concrete adapters into the application,
@@ -14,11 +16,17 @@ async function main(): Promise<void> {
   Logger.initialize(env.NEW_RELIC_APP_NAME);
 
   const toutboxHttpClient = new ToutboxHttpClient(env.TOUTBOX_BASE_URL, env.TOUTBOX_API_KEY);
+  const waveDeliveryApiHttpClient = new WaveDeliveryApiHttpClient(
+    env.WAVE_DELIVERY_API_BASE_URL,
+    env.WAVE_DELIVERY_API_KEY,
+  );
 
   const app = buildApp({
     apiKey: env.INTERNAL_API_KEY,
     createDeliveryOrder: new ToutboxCreateDeliveryOrder(toutboxHttpClient),
     cancelDeliveryOrder: new ToutboxCancelDeliveryOrder(toutboxHttpClient),
+    processDeliveryWebhook: new ToutboxProcessDeliveryWebhook(waveDeliveryApiHttpClient),
+    webhookApiKey: env.TOUTBOX_WEBHOOK_API_KEY,
   });
 
   const shutdown = async (signal: string): Promise<void> => {

@@ -43,7 +43,13 @@ function buildTestApp(execute: CarrierCancelDeliveryOrder['execute']): FastifyIn
     execute: async () => failure({ status: 500, message: 'not used in this test file' }),
   };
   const cancelDeliveryOrder: CarrierCancelDeliveryOrder = { execute };
-  return buildApp({ apiKey: API_KEY, createDeliveryOrder, cancelDeliveryOrder });
+  return buildApp({
+    apiKey: API_KEY,
+    createDeliveryOrder,
+    cancelDeliveryOrder,
+    processDeliveryWebhook: { execute: async () => success(undefined) },
+    webhookApiKey: 'test-webhook-key',
+  });
 }
 
 describe('POST /courier/delivery-orders/:id/cancel', () => {
