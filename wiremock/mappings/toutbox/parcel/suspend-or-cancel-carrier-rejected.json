@@ -12,7 +12,7 @@
       {
         "matchesJsonPath": {
           "expression": "$.order_id",
-          "equalTo": "Example-03213"
+          "equalTo": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"
         }
       }
     ]

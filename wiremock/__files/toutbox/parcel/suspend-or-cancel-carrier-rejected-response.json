@@ -6,7 +6,7 @@
       "action": "CE",
       "nf_key": null,
       "tracking": null,
-      "order_id": "Example-03213",
+      "order_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
       "mktp_order_id": null,
       "erp_order_id": null,
       "unique_id": null,
@@ -15,8 +15,8 @@
     },
     "responseCode": 202,
     "requestSucceeded": false,
-    "error": "Erro ao enviar solicitação - Retorno da transportadora: '400 - BadRequest - Pedido Example-03213 não encontrado'",
-    "responseMessage": "Erro ao enviar solicitação - Retorno da transportadora: '400 - BadRequest - Pedido Example-03213 não encontrado'"
+    "error": "Erro ao enviar solicitação - Retorno da transportadora: '400 - BadRequest - Pedido aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa não encontrado'",
+    "responseMessage": "Erro ao enviar solicitação - Retorno da transportadora: '400 - BadRequest - Pedido aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa não encontrado'"
   },
   "tenant": null,
   "wl": null
