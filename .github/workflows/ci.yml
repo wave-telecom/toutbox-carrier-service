@@ -36,8 +36,17 @@ jobs:
       - name: Build
         run: npm run build
 
+      # PACT_BROKER_URL gates pact-provider-verification.pact.test.ts (it skips
+      # itself when unset, per ADR 0000) — setting it here is what turns the
+      # verification against wave-delivery-api's consumer contract on in CI.
+      # publishVerificationResult in that test is already gated on `CI === 'true'`,
+      # which GitHub Actions sets by default, so results get recorded automatically.
       - name: Test with coverage
         run: npm run test:coverage
+        env:
+          PACT_BROKER_URL: ${{ vars.PACT_BROKER_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
 
       - name: Publish coverage report
         if: always()
