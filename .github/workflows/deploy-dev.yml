@@ -1,0 +1,65 @@
+# Rolls out the images `cd-dev.yml` already built and pushed to Artifact Registry —
+# this repo's own equivalent of wave-foundation-iac's `app-dev-deploy.yml` /
+# `update-service-image` action, inlined here because this service breaks that
+# pipeline's assumptions (one module = one Cloud Run service backed by a database):
+# toutbox-carrier is two services (itself + its WireMock double) and owns no database,
+# so there's no migration or bootstrap step, just the two image swaps below.
+#
+# Requires, on the repository:
+#   secrets — GCP_CREDENTIALS (the same one `cd-dev.yml` uses)
+#   vars    — GCP_FOUNDATION_REGION, GCP_FOUNDATION_PROJECT_ID, GAR_REPOSITORY_DEV
+# Requires, on each tenant's GitHub Environment (e.g. "tim-dev"):
+#   vars — GCP_TENANT_NAME, GCP_TENANT_PROJECT_ID, GCP_TENANT_REGION
+#
+# Adding a second dev tenant is just one more `tenant_env` entry below plus a GitHub
+# Environment with its own three GCP_TENANT_* vars — nothing else changes.
+name: Deploy - Development
+
+on:
+  workflow_run:
+    workflows: ["CD - Development"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  SERVICE_NAME: toutbox-carrier-service
+  WIREMOCK_IMAGE_NAME: toutbox-carrier-wiremock
+
+jobs:
+  rollout:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        tenant_env: [tim-dev]
+    environment: ${{ matrix.tenant_env }}
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Update Cloud Run service image
+        run: |
+          IMAGE_TAG="${{ github.event.workflow_run.head_branch || 'main' }}"
+          IMAGE="${{ vars.GCP_FOUNDATION_REGION }}-docker.pkg.dev/${{ vars.GCP_FOUNDATION_PROJECT_ID }}/${{ vars.GAR_REPOSITORY_DEV }}/${{ env.SERVICE_NAME }}:${IMAGE_TAG}"
+          gcloud run services update "${{ vars.GCP_TENANT_NAME }}-toutbox-carrier" \
+            --image "$IMAGE" \
+            --region "${{ vars.GCP_TENANT_REGION }}" \
+            --project "${{ vars.GCP_TENANT_PROJECT_ID }}" \
+            --quiet
+
+      - name: Update Cloud Run WireMock image
+        run: |
+          IMAGE_TAG="${{ github.event.workflow_run.head_branch || 'main' }}"
+          WIREMOCK_IMAGE="${{ vars.GCP_FOUNDATION_REGION }}-docker.pkg.dev/${{ vars.GCP_FOUNDATION_PROJECT_ID }}/${{ vars.GAR_REPOSITORY_DEV }}/${{ env.WIREMOCK_IMAGE_NAME }}:${IMAGE_TAG}"
+          gcloud run services update "${{ vars.GCP_TENANT_NAME }}-toutbox-wiremock" \
+            --image "$WIREMOCK_IMAGE" \
+            --region "${{ vars.GCP_TENANT_REGION }}" \
+            --project "${{ vars.GCP_TENANT_PROJECT_ID }}" \
+            --quiet
