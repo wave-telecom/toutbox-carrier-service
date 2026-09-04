@@ -11,8 +11,8 @@ import { ToutboxCreateDeliveryOrder } from '../vendor/toutbox/usecases/toutbox-c
 import { ToutboxCancelDeliveryOrder } from '../vendor/toutbox/usecases/toutbox-cancel-delivery-order.js';
 
 /**
- * Provider-side Pact verification against `wave-delivery-api`'s consumer
- * contract (ADR 0000, `tim-network-adapter`). Starts the real app wired to a
+ * Provider-side Pact verification against every consumer's contract
+ * (ADR 0000, `tim-network-adapter`). Starts the real app wired to a
  * real `ToutboxHttpClient`, pointed at a WireMock container built from this
  * repo's own `wiremock/Dockerfile.wiremock` — the same image ADR 0001 uses
  * for local dev, CI, and (here) Pact provider verification — so the app
@@ -69,7 +69,7 @@ describe.runIf(Boolean(PACT_BROKER_URL))('toutbox-carrier-service (Pact provider
     await wiremock?.stop();
   });
 
-  it('satisfies the wave-delivery-api consumer contract', async () => {
+  it("satisfies every consumer's contract", async () => {
     const verifier = new Verifier({
       provider: 'toutbox-carrier-service',
       providerBaseUrl,
@@ -78,7 +78,7 @@ describe.runIf(Boolean(PACT_BROKER_URL))('toutbox-carrier-service (Pact provider
       ...(PACT_BROKER_USERNAME && PACT_BROKER_PASSWORD
         ? { pactBrokerUsername: PACT_BROKER_USERNAME, pactBrokerPassword: PACT_BROKER_PASSWORD }
         : {}),
-      consumerVersionSelectors: [{ consumer: 'wave-delivery-api', latest: true }],
+      consumerVersionSelectors: [{ mainBranch: true }],
       // The git SHA is the version identity on both sides of a Pact exchange
       // (ADR 0000, `tim-network-adapter`) — required by the broker-mode
       // validator even when not actually publishing a result.
