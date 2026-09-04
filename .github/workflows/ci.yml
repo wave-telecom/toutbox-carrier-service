@@ -36,10 +36,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      # No PACT_BROKER_URL here: pact-provider-verification.pact.test.ts skips
-      # itself when it's unset (ADR 0000), which is deliberate in this job —
-      # verification runs once per tenant broker in pact-verify below instead
-      # of once per tenant inside this shared build/lint/typecheck run.
       - name: Test with coverage
         run: npm run test:coverage
 
