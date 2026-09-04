@@ -24,6 +24,10 @@ env:
   # Image name in Artifact Registry. `scripts/rename-service.sh` rewrites it.
   SERVICE_NAME: toutbox-carrier-service
   WIREMOCK_IMAGE_NAME: toutbox-carrier-wiremock
+  # Pact provider identity — the role wave-delivery-api's consumer contract
+  # names, not this repo's own name. Deliberately not SERVICE_NAME: this repo
+  # is one possible implementation of that role, not the role itself.
+  PACTICIPANT: external-carrier-service
 
 jobs:
   pact-can-i-deploy:
@@ -55,7 +59,7 @@ jobs:
           PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
         run: |
           npx pact-broker can-i-deploy \
-            --pacticipant="${{ env.SERVICE_NAME }}" \
+            --pacticipant="${{ env.PACTICIPANT }}" \
             --version="${{ github.sha }}" \
             --to-environment=dev \
             --broker-base-url="$PACT_BROKER_URL" \
@@ -137,7 +141,7 @@ jobs:
           PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
         run: |
           npx pact-broker record-deployment \
-            --pacticipant="${{ env.SERVICE_NAME }}" \
+            --pacticipant="${{ env.PACTICIPANT }}" \
             --version="${{ github.sha }}" \
             --environment=dev \
             --broker-base-url="$PACT_BROKER_URL" \
