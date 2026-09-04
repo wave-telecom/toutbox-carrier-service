@@ -24,10 +24,11 @@ env:
   # Image name in Artifact Registry. `scripts/rename-service.sh` rewrites it.
   SERVICE_NAME: toutbox-carrier-service
   WIREMOCK_IMAGE_NAME: toutbox-carrier-wiremock
-  # Pact provider identity — the role wave-delivery-api's consumer contract
-  # names, not this repo's own name. Deliberately not SERVICE_NAME: this repo
-  # is one possible implementation of that role, not the role itself.
-  PACTICIPANT: external-carrier-service
+  # Pact provider identity this repo verifies and is deployed under. Now that
+  # wave-delivery-api can be configured with N delivery providers, each
+  # fulfilled by its own carrier-service repo, this is this repo's own name —
+  # not a role name shared with other adapters.
+  PACTICIPANT: toutbox-carrier-service
 
 jobs:
   pact-can-i-deploy:

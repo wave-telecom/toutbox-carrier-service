@@ -73,10 +73,15 @@ describe.runIf(Boolean(PACT_BROKER_URL))('toutbox-carrier-service (Pact provider
 
   it("satisfies every consumer's contract", async () => {
     const verifier = new Verifier({
-      // 'external-carrier-service': the role wave-delivery-api's consumer
-      // contract names, not this repo's own name — whichever adapter
-      // implements the carrier registers itself under this same identity.
-      provider: 'external-carrier-service',
+      // 'toutbox-carrier-service': this repo's own identity. wave-delivery-api
+      // can now be configured with N delivery providers (Correios, Toutbox,
+      // ...), each fulfilled by its own carrier-service repo — so the pact
+      // provider identity is no longer a single name shared by whichever
+      // adapter happens to implement the carrier; each adapter registers and
+      // is verified under its own name, matching what wave-delivery-api
+      // publishes for its DeliveryProvider (see CONTRACT_PROVIDER_NAMES in
+      // wave-delivery-api's ci.yml).
+      provider: 'toutbox-carrier-service',
       providerBaseUrl,
       customProviderHeaders: ['x-api-key: pact-verification-key'],
       pactBrokerUrl: PACT_BROKER_URL,
