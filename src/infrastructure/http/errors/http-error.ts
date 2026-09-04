@@ -24,6 +24,7 @@ export const ErrorTypes = {
   INVALID_STATUS_TRANSITION: `${ERROR_TYPE_BASE_URI}/invalid-status-transition`,
   OPERATION_NOT_ALLOWED: `${ERROR_TYPE_BASE_URI}/operation-not-allowed`,
   NOT_IMPLEMENTED: `${ERROR_TYPE_BASE_URI}/not-implemented`,
+  FAILED_DEPENDENCY: `${ERROR_TYPE_BASE_URI}/failed-dependency`,
   BAD_GATEWAY: `${ERROR_TYPE_BASE_URI}/bad-gateway`,
   INTERNAL_SERVER_ERROR: `${ERROR_TYPE_BASE_URI}/internal-server-error`,
 } as const;
@@ -116,6 +117,12 @@ export class NotImplementedError extends HttpError {
   readonly type = ErrorTypes.NOT_IMPLEMENTED;
 }
 
+/** The vendor rejected a fixed carrier/service identifier this repo sends — an upstream integration mismatch, not a caller error. */
+export class FailedDependencyError extends HttpError {
+  readonly status = 424;
+  readonly type = ErrorTypes.FAILED_DEPENDENCY;
+}
+
 export class BadGatewayError extends HttpError {
   readonly status = 502;
   readonly type = ErrorTypes.BAD_GATEWAY;
@@ -138,10 +145,14 @@ export function httpErrorForStatus(status: number, message: string): HttpError {
   switch (status) {
     case 400:
       return new ValidationError(message);
+    case 404:
+      return new NotFoundError(message);
     case 409:
       return new ConflictError(message);
     case 422:
       return new OperationNotAllowedHttpError(message);
+    case 424:
+      return new FailedDependencyError(message);
     case 501:
       return new NotImplementedError(message);
     case 502:
