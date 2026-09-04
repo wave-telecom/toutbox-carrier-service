@@ -8,9 +8,11 @@ import { registerApiKeyAuth } from './auth/api-key-auth.js';
 import { managementRoutes } from './routes/management-routes.js';
 import { carrierCreateDeliveryOrderRoute } from './routes/carrier-create-delivery-order-route.js';
 import { carrierCancelDeliveryOrderRoute } from './routes/carrier-cancel-delivery-order-route.js';
+import { carrierQuoteShippingRoute } from './routes/carrier-quote-shipping-route.js';
 import { toutboxDeliveryWebhookRoute } from './routes/toutbox-delivery-webhook-route.js';
 import type { CarrierCreateDeliveryOrder } from '../../application/use-cases/carrier-create-delivery-order/carrier-create-delivery-order.js';
 import type { CarrierCancelDeliveryOrder } from '../../application/use-cases/carrier-cancel-delivery-order/carrier-cancel-delivery-order.js';
+import type { CarrierQuoteShipping } from '../../application/use-cases/carrier-quote-shipping/carrier-quote-shipping.js';
 import type { ProcessDeliveryWebhook } from '../vendor/toutbox/usecases/toutbox-process-delivery-webhook.js';
 
 /**
@@ -24,6 +26,7 @@ export interface AppDeps {
   apiKey: string;
   createDeliveryOrder: CarrierCreateDeliveryOrder;
   cancelDeliveryOrder: CarrierCancelDeliveryOrder;
+  quoteShipping: CarrierQuoteShipping;
   processDeliveryWebhook: ProcessDeliveryWebhook;
   /** Separate API key authenticating Toutbox's own webhook call — see {@link toutboxDeliveryWebhookRoute}. */
   webhookApiKey: string;
@@ -89,6 +92,7 @@ export function buildApp(deps: AppDeps): FastifyInstance {
   void app.register(managementRoutes);
   void app.register(carrierCreateDeliveryOrderRoute({ createDeliveryOrder: deps.createDeliveryOrder }));
   void app.register(carrierCancelDeliveryOrderRoute({ cancelDeliveryOrder: deps.cancelDeliveryOrder }));
+  void app.register(carrierQuoteShippingRoute({ quoteShipping: deps.quoteShipping }));
   void app.register(
     toutboxDeliveryWebhookRoute({
       processDeliveryWebhook: deps.processDeliveryWebhook,

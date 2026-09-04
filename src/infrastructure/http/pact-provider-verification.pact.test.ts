@@ -9,6 +9,7 @@ import { buildApp } from './app.js';
 import { ToutboxHttpClient } from '../vendor/toutbox/toutbox-http-client.js';
 import { ToutboxCreateDeliveryOrder } from '../vendor/toutbox/usecases/toutbox-create-delivery-order.js';
 import { ToutboxCancelDeliveryOrder } from '../vendor/toutbox/usecases/toutbox-cancel-delivery-order.js';
+import { ToutboxQuoteShipping } from '../vendor/toutbox/usecases/toutbox-quote-shipping.js';
 
 /**
  * Provider-side Pact verification against every consumer's contract
@@ -53,6 +54,7 @@ describe.runIf(Boolean(PACT_BROKER_URL))('toutbox-carrier-service (Pact provider
       apiKey: 'pact-verification-key',
       createDeliveryOrder: new ToutboxCreateDeliveryOrder(toutboxHttpClient),
       cancelDeliveryOrder: new ToutboxCancelDeliveryOrder(toutboxHttpClient),
+      quoteShipping: new ToutboxQuoteShipping(toutboxHttpClient),
       processDeliveryWebhook: { execute: async () => success(undefined) },
       webhookApiKey: 'pact-webhook-key',
     });

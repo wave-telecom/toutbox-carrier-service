@@ -6,6 +6,7 @@ import { API_KEY_HEADER } from './auth/api-key-auth.js';
 import { ErrorTypes } from './errors/http-error.js';
 import type { CarrierCreateDeliveryOrder } from '../../application/use-cases/carrier-create-delivery-order/carrier-create-delivery-order.js';
 import type { CarrierCancelDeliveryOrder } from '../../application/use-cases/carrier-cancel-delivery-order/carrier-cancel-delivery-order.js';
+import type { CarrierQuoteShipping } from '../../application/use-cases/carrier-quote-shipping/carrier-quote-shipping.js';
 import type { ProcessDeliveryWebhook } from '../vendor/toutbox/usecases/toutbox-process-delivery-webhook.js';
 
 const API_KEY = 'test-secret-key';
@@ -16,6 +17,9 @@ const createDeliveryOrder: CarrierCreateDeliveryOrder = {
   execute: async () => failure({ status: 500, message: 'not used in this test file' }),
 };
 const cancelDeliveryOrder: CarrierCancelDeliveryOrder = {
+  execute: async () => failure({ status: 500, message: 'not used in this test file' }),
+};
+const quoteShipping: CarrierQuoteShipping = {
   execute: async () => failure({ status: 500, message: 'not used in this test file' }),
 };
 const processDeliveryWebhook: ProcessDeliveryWebhook = {
@@ -30,6 +34,7 @@ describe('buildApp', () => {
       apiKey: API_KEY,
       createDeliveryOrder,
       cancelDeliveryOrder,
+      quoteShipping,
       processDeliveryWebhook,
       webhookApiKey: WEBHOOK_API_KEY,
     });
