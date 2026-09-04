@@ -49,14 +49,18 @@ jobs:
 
       - name: Can I deploy to ${{ matrix.tenant_env }}?
         if: vars.PACT_BROKER_URL != ''
+        env:
+          PACT_BROKER_URL: ${{ vars.PACT_BROKER_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
         run: |
           npx pact-broker can-i-deploy \
             --pacticipant="${{ env.SERVICE_NAME }}" \
             --version="${{ github.sha }}" \
             --to-environment=dev \
-            --broker-base-url="${{ vars.PACT_BROKER_URL }}" \
-            --broker-username="${{ secrets.PACT_BROKER_USERNAME }}" \
-            --broker-password="${{ secrets.PACT_BROKER_PASSWORD }}"
+            --broker-base-url="$PACT_BROKER_URL" \
+            --broker-username="$PACT_BROKER_USERNAME" \
+            --broker-password="$PACT_BROKER_PASSWORD"
 
   deploy:
     needs: pact-can-i-deploy
@@ -127,11 +131,15 @@ jobs:
 
       - name: Record deployment to ${{ matrix.tenant_env }}
         if: vars.PACT_BROKER_URL != ''
+        env:
+          PACT_BROKER_URL: ${{ vars.PACT_BROKER_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
         run: |
           npx pact-broker record-deployment \
             --pacticipant="${{ env.SERVICE_NAME }}" \
             --version="${{ github.sha }}" \
             --environment=dev \
-            --broker-base-url="${{ vars.PACT_BROKER_URL }}" \
-            --broker-username="${{ secrets.PACT_BROKER_USERNAME }}" \
-            --broker-password="${{ secrets.PACT_BROKER_PASSWORD }}"
+            --broker-base-url="$PACT_BROKER_URL" \
+            --broker-username="$PACT_BROKER_USERNAME" \
+            --broker-password="$PACT_BROKER_PASSWORD"
