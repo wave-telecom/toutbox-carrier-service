@@ -48,6 +48,7 @@ jobs:
         run: npm ci
 
       - name: Can I deploy to ${{ matrix.tenant_env }}?
+        if: vars.PACT_BROKER_URL != ''
         run: |
           npx pact-broker can-i-deploy \
             --pacticipant="${{ env.SERVICE_NAME }}" \
@@ -125,6 +126,7 @@ jobs:
         run: npm ci
 
       - name: Record deployment to ${{ matrix.tenant_env }}
+        if: vars.PACT_BROKER_URL != ''
         run: |
           npx pact-broker record-deployment \
             --pacticipant="${{ env.SERVICE_NAME }}" \
