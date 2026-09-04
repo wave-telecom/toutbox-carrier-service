@@ -71,7 +71,10 @@ describe.runIf(Boolean(PACT_BROKER_URL))('toutbox-carrier-service (Pact provider
 
   it("satisfies every consumer's contract", async () => {
     const verifier = new Verifier({
-      provider: 'toutbox-carrier-service',
+      // 'external-carrier-service': the role wave-delivery-api's consumer
+      // contract names, not this repo's own name — whichever adapter
+      // implements the carrier registers itself under this same identity.
+      provider: 'external-carrier-service',
       providerBaseUrl,
       customProviderHeaders: ['x-api-key: pact-verification-key'],
       pactBrokerUrl: PACT_BROKER_URL,
