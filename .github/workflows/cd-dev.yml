@@ -61,7 +61,7 @@ jobs:
           npx pact-broker can-i-deploy \
             --pacticipant="${{ env.PACTICIPANT }}" \
             --version="${{ github.sha }}" \
-            --to-environment=dev \
+            --to-environment=production \
             --broker-base-url="$PACT_BROKER_URL" \
             --broker-username="$PACT_BROKER_USERNAME" \
             --broker-password="$PACT_BROKER_PASSWORD"
@@ -143,7 +143,7 @@ jobs:
           npx pact-broker record-deployment \
             --pacticipant="${{ env.PACTICIPANT }}" \
             --version="${{ github.sha }}" \
-            --environment=dev \
+            --environment=production \
             --broker-base-url="$PACT_BROKER_URL" \
             --broker-username="$PACT_BROKER_USERNAME" \
             --broker-password="$PACT_BROKER_PASSWORD"
