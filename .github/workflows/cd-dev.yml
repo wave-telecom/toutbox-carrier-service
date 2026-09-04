@@ -1,18 +1,7 @@
 # Builds the production image and pushes it to Artifact Registry after CI goes
 # green on `main`. Deploying the pushed image is owned by `wave-foundation-iac`,
-# not by this workflow.
-#
-# Also builds and pushes the WireMock test double (wiremock/Dockerfile.wiremock)
-# as its own image, per tim-network-adapter ADR 0001 ("each network adapter
-# owns its own CD for this image") — same registry, alongside the application
-# image, so wave-foundation-iac has something to deploy for both.
-#
-# The image build is tenant-agnostic (one image, shared by every tenant that
-# enables this module), but the Pact gate around it isn't: each tenant runs
-# its own Pact Broker, so `can-i-deploy`/`record-deployment` run once per
-# tenant, each against that tenant's own broker via a same-named GitHub
-# Environment. Add a tenant to both matrices the same time its Pulumi config
-# enables `toutboxCarrier`.
+# not by this workflow. Also builds and pushes the WireMock test double
+# (wiremock/Dockerfile.wiremock), per tim-network-adapter ADR 0001.
 #
 # Requires, on the repository:
 #   secrets — GCP_CREDENTIALS
@@ -32,12 +21,8 @@ on:
   workflow_dispatch:
 
 env:
-  # Image name in Artifact Registry, and this repo's own Pact pacticipant name
-  # (the two happen to be the same token here). `scripts/rename-service.sh`
-  # rewrites this.
+  # Image name in Artifact Registry. `scripts/rename-service.sh` rewrites it.
   SERVICE_NAME: toutbox-carrier-service
-  # WireMock test double image name — kept distinct from SERVICE_NAME since
-  # both live in the same Artifact Registry repository.
   WIREMOCK_IMAGE_NAME: toutbox-carrier-wiremock
 
 jobs:
@@ -62,9 +47,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Refuses to proceed if this exact version hasn't been verified
-      # successfully against whatever consumer version is currently live in
-      # this tenant's `dev` — the whole reason to publish/verify pacts.
       - name: Can I deploy to ${{ matrix.tenant_env }}?
         run: |
           npx pact-broker can-i-deploy \
@@ -75,8 +57,6 @@ jobs:
             --broker-username="${{ secrets.PACT_BROKER_USERNAME }}" \
             --broker-password="${{ secrets.PACT_BROKER_PASSWORD }}"
 
-  # Builds and pushes the images once — shared by every tenant, so this does
-  # not matrix over tenant_env. Runs only once every tenant's gate above passes.
   deploy:
     needs: pact-can-i-deploy
     runs-on: ubuntu-latest
@@ -114,22 +94,15 @@ jobs:
           docker build -t "$IMAGE" .
           docker push "$IMAGE"
 
-      # Build context is the wiremock/ directory itself, not the repo root —
-      # the image's only inputs are that directory's contents (ADR 0001).
+      # Build context is the wiremock/ directory itself, not the repo root.
       - name: Build and push WireMock image
         run: |
           WIREMOCK_IMAGE="${{ vars.GCP_FOUNDATION_REGION }}-docker.pkg.dev/${{ vars.GCP_FOUNDATION_PROJECT_ID }}/${{ vars.GAR_REPOSITORY_DEV }}/${{ env.WIREMOCK_IMAGE_NAME }}:${{ github.ref_name }}"
           docker build -f wiremock/Dockerfile.wiremock -t "$WIREMOCK_IMAGE" ./wiremock
           docker push "$WIREMOCK_IMAGE"
 
-  # Approximation: this records the version as "deployed to dev" as soon as
-  # both images are pushed, not when wave-foundation-iac's App Dev Deploy
-  # actually rolls them out to Cloud Run for that tenant (a separate, later,
-  # manually-triggered step owned by that repo) — the gap between the two is
-  # normally small for dev. Good enough to give future `can-i-deploy` runs a
-  # real baseline; revisit if that gap ever matters (e.g. by moving this call
-  # into wave-foundation-iac's update-service-image action instead, right
-  # after the actual `gcloud run services update`).
+  # Records "deployed" at image-push time, not at actual Cloud Run rollout
+  # (a separate, later step owned by wave-foundation-iac).
   pact-record-deployment:
     needs: deploy
     runs-on: ubuntu-latest

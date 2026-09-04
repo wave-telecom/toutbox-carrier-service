@@ -48,13 +48,9 @@ jobs:
           fail-on-error: 'false'
           label: unit
 
-  # Each tenant hosting this service runs its own self-hosted Pact Broker
-  # (wave-foundation-iac's pact-broker module, one per tenant) — provider
-  # verification has to run once per tenant's broker, against that tenant's
-  # own consumer versions, using that tenant's own credentials. A GitHub
-  # Environment scopes PACT_BROKER_URL/USERNAME/PASSWORD per tenant; add a
-  # matrix entry (and a matching Environment in repo settings) the same time
-  # a tenant's Pulumi config enables `toutboxCarrier`.
+  # One tenant per matrix entry / GitHub Environment (PACT_BROKER_URL,
+  # PACT_BROKER_USERNAME, PACT_BROKER_PASSWORD) — each tenant runs its own
+  # Pact Broker.
   pact-verify:
     runs-on: ubuntu-latest
     strategy:
@@ -75,8 +71,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Runs only this one spec, not the full suite — the rest of the tests
-      # don't depend on a broker and already ran once in build-test above.
       - name: Verify against ${{ matrix.tenant_env }}'s Pact Broker
         run: npx vitest run src/infrastructure/http/pact-provider-verification.pact.test.ts
         env:
