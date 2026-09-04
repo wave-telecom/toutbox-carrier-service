@@ -36,17 +36,12 @@ jobs:
       - name: Build
         run: npm run build
 
-      # PACT_BROKER_URL gates pact-provider-verification.pact.test.ts (it skips
-      # itself when unset, per ADR 0000) — setting it here is what turns the
-      # verification against wave-delivery-api's consumer contract on in CI.
-      # publishVerificationResult in that test is already gated on `CI === 'true'`,
-      # which GitHub Actions sets by default, so results get recorded automatically.
+      # No PACT_BROKER_URL here: pact-provider-verification.pact.test.ts skips
+      # itself when it's unset (ADR 0000), which is deliberate in this job —
+      # verification runs once per tenant broker in pact-verify below instead
+      # of once per tenant inside this shared build/lint/typecheck run.
       - name: Test with coverage
         run: npm run test:coverage
-        env:
-          PACT_BROKER_URL: ${{ vars.PACT_BROKER_URL }}
-          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
-          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
 
       - name: Publish coverage report
         if: always()
@@ -56,3 +51,39 @@ jobs:
           audience: https://github.com/wave-telecom
           fail-on-error: 'false'
           label: unit
+
+  # Each tenant hosting this service runs its own self-hosted Pact Broker
+  # (wave-foundation-iac's pact-broker module, one per tenant) — provider
+  # verification has to run once per tenant's broker, against that tenant's
+  # own consumer versions, using that tenant's own credentials. A GitHub
+  # Environment scopes PACT_BROKER_URL/USERNAME/PASSWORD per tenant; add a
+  # matrix entry (and a matching Environment in repo settings) the same time
+  # a tenant's Pulumi config enables `toutboxCarrier`.
+  pact-verify:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tenant_env: [tim-dev]
+    environment: ${{ matrix.tenant_env }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Runs only this one spec, not the full suite — the rest of the tests
+      # don't depend on a broker and already ran once in build-test above.
+      - name: Verify against ${{ matrix.tenant_env }}'s Pact Broker
+        run: npx vitest run src/infrastructure/http/pact-provider-verification.pact.test.ts
+        env:
+          PACT_BROKER_URL: ${{ vars.PACT_BROKER_URL }}
+          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
+          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
