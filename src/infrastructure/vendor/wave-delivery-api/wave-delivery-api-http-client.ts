@@ -34,12 +34,18 @@ export class WaveDeliveryApiHttpClient {
     path: string,
     body: unknown,
   ): Promise<WaveDeliveryApiHttpResponse> {
+    const headers: Record<string, string> = { 'x-api-key': this.apiKey };
+    // Only claim a JSON body when one is actually sent — wave-delivery-api's
+    // Fastify JSON body parser rejects an empty body sent with
+    // `Content-Type: application/json` (a bodyless call, e.g. marking a
+    // cancellation complete, would otherwise always 400).
+    if (body !== undefined) {
+      headers['Content-Type'] = 'application/json';
+    }
+
     const response = await fetch(`${this.baseUrl}${path}`, {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': this.apiKey,
-      },
+      headers,
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     const responseBody: unknown = await response.json();
