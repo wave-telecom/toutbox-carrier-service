@@ -18,7 +18,7 @@ const SUPPORTED_RESOURCE_TYPE = 'SIM';
 
 /**
  * Implements {@link CarrierCreateDeliveryOrder} against Toutbox's own
- * `POST /api/v1/external/orders`. Owns the full Wave-shape <-> Toutbox-shape
+ * `POST /api/v1/External/Order`. Owns the full Wave-shape <-> Toutbox-shape
  * translation — nothing about Toutbox's wire format leaks past this file.
  */
 export class ToutboxCreateDeliveryOrder implements CarrierCreateDeliveryOrder {
@@ -39,7 +39,7 @@ export class ToutboxCreateDeliveryOrder implements CarrierCreateDeliveryOrder {
 
     let response;
     try {
-      response = await this.httpClient.post('/api/v1/external/orders', payload);
+      response = await this.httpClient.post('/api/v1/External/Order', payload);
     } catch (error) {
       Logger.error(
         'Toutbox order creation call failed',
@@ -62,8 +62,7 @@ interface ToutboxEnvelope {
   payload?: {
     pedido?: {
       itens?: Array<{
-        previsaoDeEntrega?: unknown;
-        frete?: { prazoDiasUteis?: unknown };
+        frete?: { transportadora?: { previsaoDeEntrega?: unknown; prazoDiasUteis?: unknown } };
       }>;
     };
   };
@@ -86,14 +85,15 @@ function mapCreateResponse(
         correlationId: getHookCorrelationId(),
       });
     }
-    const item = envelope.payload?.pedido?.itens?.[0];
+    const transportadora = envelope.payload?.pedido?.itens?.[0]?.frete?.transportadora;
     return success({
       providerTrackingCode: trackingCode,
       // Toutbox has no tracking URL to offer at creation time — it only ever
       // arrives later, via the delivery-status webhook.
       providerTrackingUrl: null,
-      estimatedDelivery: typeof item?.previsaoDeEntrega === 'string' ? item.previsaoDeEntrega : null,
-      slaDays: typeof item?.frete?.prazoDiasUteis === 'number' ? item.frete.prazoDiasUteis : null,
+      estimatedDelivery:
+        typeof transportadora?.previsaoDeEntrega === 'string' ? transportadora.previsaoDeEntrega : null,
+      slaDays: typeof transportadora?.prazoDiasUteis === 'number' ? transportadora.prazoDiasUteis : null,
       metadata: null,
     });
   }
@@ -116,7 +116,7 @@ function toTrackingCode(deliveryOrderId: string): string {
   return `${deliveryOrderId.replaceAll('-', '')}01`;
 }
 
-/** Maps the shared Wave contract to Toutbox's own `POST /api/v1/external/orders` body shape. */
+/** Maps the shared Wave contract to Toutbox's own `POST /api/v1/External/Order` body shape. */
 function toToutboxOrderPayload(input: CarrierCreateDeliveryOrderRequest, trackingCode: string) {
   return {
     criacaoPedido: new Date().toISOString(),

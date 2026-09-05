@@ -2,7 +2,7 @@
   "priority": 100,
   "request": {
     "method": "POST",
-    "urlPath": "/api/v1/external/orders"
+    "urlPath": "/api/v1/External/Order"
   },
   "response": {
     "status": 401,

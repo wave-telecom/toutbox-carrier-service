@@ -15,7 +15,7 @@ the other end of that call, only that it is calling "the configured external car
 **Current state:** two operations are implemented — `CarrierCreateDeliveryOrder`
 (`POST /courier/delivery-orders`) and `CarrierCancelDeliveryOrder`
 (`POST /courier/delivery-orders/:id/cancel`), each against Toutbox's own
-`POST /api/v1/external/orders` and `PUT /api/v1/Parcel/SuspendOrCancel/Single`. Both currently only
+`POST /api/v1/External/Order` and `PUT /api/v1/Parcel/SuspendOrCancel/Single`. Both currently only
 support `resourceType: "SIM"` (Toutbox's payload shape is fixed chip-logistics fields); any other
 `resourceType` returns `NOT_IMPLEMENTED` (501) without calling Toutbox at all. Use these two as the
 template for the next operation.

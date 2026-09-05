@@ -2,7 +2,7 @@
   "priority": 10,
   "request": {
     "method": "POST",
-    "urlPath": "/api/v1/external/orders",
+    "urlPath": "/api/v1/External/Order",
     "headers": {
       "Authorization": {
         "equalTo": "local-dev-toutbox-api-key"
