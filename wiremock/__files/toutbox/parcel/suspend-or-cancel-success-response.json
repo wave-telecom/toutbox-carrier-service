@@ -13,10 +13,10 @@
       "courier_id": 122,
       "nf_number": null
     },
-    "responseCode": 202,
+    "responseCode": 200,
     "requestSucceeded": true,
     "error": null,
-    "responseMessage": "Solicitação de cancelamento enviada com sucesso à transportadora"
+    "responseMessage": "200 - OK, Solicitação Recebida"
   },
   "tenant": null,
   "wl": null

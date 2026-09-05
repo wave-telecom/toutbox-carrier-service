@@ -10,7 +10,7 @@
     }
   },
   "response": {
-    "status": 202,
+    "status": 200,
     "bodyFileName": "toutbox/parcel/suspend-or-cancel-success-response.json",
     "headers": {
       "Content-Type": "application/json"
