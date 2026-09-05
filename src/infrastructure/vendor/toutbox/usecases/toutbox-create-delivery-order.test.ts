@@ -68,6 +68,52 @@ describe('ToutboxCreateDeliveryOrder', () => {
     }
   });
 
+  it('maps estimatedDelivery and slaDays from payload.pedido.itens[0].frete.transportadora when Toutbox sends them', async () => {
+    const useCase = new ToutboxCreateDeliveryOrder(
+      fakeClient(async () => ({
+        status: 200,
+        body: {
+          results: 'OK',
+          error: null,
+          payload: {
+            numeroPedido: 'x',
+            status: 'RECEBIDO',
+            pedido: {
+              itens: [
+                { frete: { transportadora: { previsaoDeEntrega: '2026-09-10', prazoDiasUteis: 3 } } },
+              ],
+            },
+          },
+        },
+      })),
+    );
+
+    const result = await useCase.execute(validInput());
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.estimatedDelivery).toBe('2026-09-10');
+      expect(result.value.slaDays).toBe(3);
+    }
+  });
+
+  it('leaves estimatedDelivery and slaDays null when Toutbox does not send payload.pedido', async () => {
+    const useCase = new ToutboxCreateDeliveryOrder(
+      fakeClient(async () => ({
+        status: 200,
+        body: { results: 'OK', error: null, payload: { numeroPedido: 'x', status: 'RECEBIDO' } },
+      })),
+    );
+
+    const result = await useCase.execute(validInput());
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.estimatedDelivery).toBeNull();
+      expect(result.value.slaDays).toBeNull();
+    }
+  });
+
   it('sends the recipient zip code nested at itens[0].frete.destinatario.cep', async () => {
     let sentBody: unknown;
     const useCase = new ToutboxCreateDeliveryOrder(

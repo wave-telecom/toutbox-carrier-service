@@ -4,8 +4,156 @@
     "message": "Pedido cadastrado, porém houve falha ao executar o despacho automático — reportar à equipe TIM/Integrador"
   },
   "payload": {
-    "numeroPedido": "10-0000096267",
-    "status": "RECEBIDO_COM_ALERTA"
+    "pedido": {
+      "criacaoPedido": "2026-09-05T01:00:00",
+      "dataPagamento": "2026-09-05T01:00:00",
+      "numeroPedido": "10-0000096267",
+      "numeroPedidoMarketplace": "10-0000096267",
+      "numeroPedidoErp": "10-0000096267",
+      "idsAuxiliares": [],
+      "numeroPedidoAux": null,
+      "marketplace": null,
+      "marca": null,
+      "seller": null,
+      "canalDeVenda": { "id": "10", "nome": "ALERT BRASIL", "tipo": "Remote" },
+      "warehouse": null,
+      "unidadeDeNegocio": null,
+      "rede": null,
+      "campanha": null,
+      "itens": [
+        {
+          "idUnico": "4d32fe45-0652-422a-accf-0bd70c1a9414",
+          "quantidadeProdutos": 1,
+          "volumes": 1,
+          "largura": 10,
+          "peso": 1000,
+          "altura": 10,
+          "comprimento": 10,
+          "formato": "BOX",
+          "produtos": [
+            {
+              "descricao": "NAKED",
+              "altura": 10,
+              "comprimento": 10,
+              "largura": 0,
+              "peso": 1000,
+              "preco": 5,
+              "quantidade": 1,
+              "sku": null,
+              "codigoProduto": null,
+              "numeroDeSerie": null,
+              "fabricante": null
+            }
+          ],
+          "frete": {
+            "transportadora": {
+              "id": "122",
+              "nome": "TIM",
+              "nomeServico": "Chip Express",
+              "codigoRastreio": "1000009626701",
+              "idServico": "100",
+              "reversa": false,
+              "coleta": false,
+              "dispatch": false,
+              "alocacaoAutomatica": false,
+              "codigoAutorizacao": null,
+              "previsaoDeEntrega": "2026-09-10T00:00:00",
+              "dataPrometida": null,
+              "prazoDiasUteis": 3,
+              "prazoEntregaFinal": null,
+              "listaPostagem": null,
+              "valorAR": null,
+              "valorAverbadoPago": null,
+              "valorDeclarado": null,
+              "valorFrete": null,
+              "cnpj": null,
+              "responsavelRecebimento": null,
+              "senhaVerificacao": null,
+              "tipoOperacao": null,
+              "tipoDevolucao": null,
+              "motivoDevolucao": null,
+              "prioridade": false,
+              "tipoPrioridade": null,
+              "servicosAdicionais": []
+            },
+            "destinatario": {
+              "nome": "Ada Lovelace",
+              "cpfcnpj": "12345678900",
+              "telefone": "+5511999999999",
+              "email": "",
+              "empresa": null,
+              "endereco": "Rua A",
+              "numero": "100",
+              "complemento": null,
+              "referencia": "",
+              "bairro": "Centro",
+              "cidade": "São Paulo",
+              "estado": "SP",
+              "pais": "Brasil",
+              "cep": "01000000",
+              "ie": null,
+              "lat": null,
+              "long": null
+            },
+            "remetente": {
+              "nome": "CD - TIM",
+              "loja": null,
+              "nomeCentroDistribuicao": "CD TIM",
+              "codigoCentroDistribuicao": "CD TIM",
+              "endereco": "AV. Joao Cabral de Melo Neto",
+              "numero": "850",
+              "complemento": null,
+              "bairro": "Barra da Tijuca",
+              "cidade": "Rio de Janeiro",
+              "estado": "RJ",
+              "pais": "Brasil",
+              "cep": "22775057",
+              "ie": null,
+              "cpfcnpj": "02421421012713"
+            },
+            "tomador": {
+              "nome": "TIM Brasil SA",
+              "endereco": "AV. Joao Cabral de Melo Neto",
+              "numero": "850",
+              "complemento": null,
+              "bairro": "Barra da Tijuca",
+              "cidade": "Rio de Janeiro",
+              "estado": "RJ",
+              "pais": "Brasil",
+              "cep": "22775057",
+              "ie": null,
+              "cpfcnpj": "02421421012713"
+            }
+          }
+        }
+      ],
+      "notaFiscal": null,
+      "infosAdicionais": {
+        "cartaoPostagem": null,
+        "codigoAdmnistrativo": null,
+        "contratoCorreios": null,
+        "entregaAgendada": false,
+        "dataAgendamento": null,
+        "periodoEntregaAgendamento": null,
+        "cluster": null,
+        "tecnologiaDeAcesso": null,
+        "acronimo": null,
+        "idCliente": null,
+        "idDestinatario": null,
+        "portabilidade": true,
+        "segmentoCliente": "Controle"
+      }
+    },
+    "solicitacoesDeDespacho": {
+      "erros": [
+        { "mensagem": "Falha ao executar o despacho automático", "orderId": "10-0000096267", "volume": 1 }
+      ],
+      "sucessos": []
+    },
+    "solicitacoesDeReversa": {
+      "erros": null,
+      "sucessos": []
+    }
   },
   "tenant": null,
   "wl": null

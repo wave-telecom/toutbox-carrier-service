@@ -169,7 +169,7 @@ curl -X POST http://localhost:8443/api/v1/Courier/CostAndDeliveryTime \
   -d '{"transportadora":122,"codigoServico":"100","cepOrigem":"22775057","cepDestino":"00000000","produtos":[]}'
 ```
 
-#### Criação de pedido — `POST /api/v1/external/orders`
+#### Criação de pedido — `POST /api/v1/External/Order`
 
 Force a scenario via `itens[0].frete.destinatario.cep`:
 
@@ -188,7 +188,7 @@ Force a scenario via `itens[0].frete.destinatario.cep`:
 > test should resend the same `numeroPedido`/`codigoRastreio` pair, not rely on a magic CEP.
 
 ```bash
-curl -X POST http://localhost:8443/api/v1/external/orders \
+curl -X POST http://localhost:8443/api/v1/External/Order \
   -H "Content-Type: application/json" -H "Authorization: local-dev-toutbox-api-key" \
   -d '{"itens":[{"frete":{"destinatario":{"cep":"11111111"}}}]}'
 ```
