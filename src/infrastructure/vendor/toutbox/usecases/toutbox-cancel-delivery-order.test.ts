@@ -68,6 +68,24 @@ describe('ToutboxCancelDeliveryOrder', () => {
     expect(sentBody).toEqual({ action: 'CE', order_id: 'order-42' });
   });
 
+  it('maps a 200 with requestSucceeded:true to a CANCELLING success (Toutbox\'s real "full success" status)', async () => {
+    const useCase = new ToutboxCancelDeliveryOrder(
+      fakeClient(async () => ({
+        status: 200,
+        body: {
+          results: 'OK',
+          error: null,
+          payload: { requestSucceeded: true, responseMessage: '200 - OK, Solicitação Recebida' },
+        },
+      })),
+    );
+
+    const result = await useCase.execute(validInput());
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.value.status).toBe('CANCELLING');
+  });
+
   it('maps a 202 with requestSucceeded:true to a CANCELLING success', async () => {
     const useCase = new ToutboxCancelDeliveryOrder(
       fakeClient(async () => ({

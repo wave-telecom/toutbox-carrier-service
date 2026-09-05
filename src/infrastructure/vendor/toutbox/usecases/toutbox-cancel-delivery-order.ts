@@ -73,7 +73,10 @@ function mapCancelResponse(
 ): Result<CarrierCancelDeliveryOrderResponse, CarrierOperationError> {
   const envelope = response.body as ToutboxSuspendOrCancelEnvelope;
 
-  if (response.status === 202) {
+  // 200 = fully confirmed by the carrier; 202 = registered but the carrier
+  // transmission itself failed (Toutbox's own "partial success"). Both are
+  // driven by `payload.requestSucceeded`, not the status code alone.
+  if (response.status === 200 || response.status === 202) {
     if (envelope.payload?.requestSucceeded === true) {
       // Toutbox only ever acknowledges that the cancellation request was
       // accepted — actual completion arrives later via the delivery-status

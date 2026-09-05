@@ -199,16 +199,17 @@ Force a scenario via `order_id`:
 
 | To get | Send `order_id` |
 | ------ | ---------------- |
-| `202` aceito, transportadora confirmou (`payload.requestSucceeded: true`) | any `order_id` not listed below |
-| `202` aceito, mas transportadora rejeitou (`payload.requestSucceeded: false`) | `"Example-03213"` (Toutbox's own contract example) |
+| `200` aceito, transportadora confirmou (`payload.requestSucceeded: true`) | any `order_id` not listed below |
+| `202` aceito, mas transportadora rejeitou o envio (`payload.requestSucceeded: false`) | `"Example-03213"` (Toutbox's own contract example) |
 | `400` erro ao cadastrar a solicitação | `"CANCEL-INVALID-01"` |
 | `500` erro interno | `"CANCEL-ERROR-01"` |
 | `401` `Authorization` ausente/errado | omit the header, or send a different value |
 
-> Cancellation is asynchronous and never guaranteed by the call alone (contract §9) — that's why both
-> the "confirmed" and "rejected by carrier" scenarios return the same `202` status; the difference is
-> only in `payload.requestSucceeded`. A consumer of this endpoint must inspect the body, not just the
-> status code, for this one specifically.
+> Cancellation is asynchronous and never guaranteed by the call alone (contract §9). Per Toutbox's own
+> spec (SwaggerHub `ToutboxCourierApi`), a fully confirmed request answers `200`; a request that was
+> *registered* but failed to actually reach the carrier answers `202` instead — both cases carry the
+> real outcome in `payload.requestSucceeded`, so a consumer must inspect the body, not just the status
+> code, either way.
 
 ```bash
 curl -X PUT http://localhost:8443/api/v1/Parcel/SuspendOrCancel/Single \
