@@ -132,6 +132,19 @@ npm registry whenever a GitHub release is created.
 
 ## Publishing a new version
 
+`@wave-tech/toutbox-carrier` publishes via npm's **OIDC Trusted Publishing** — same mechanism
+`@wave-tech/framework` uses (see its own `npm-publish.yml`): no `NPM_TOKEN`/secret anywhere, just
+`permissions: id-token: write` and `npm publish --provenance`.
+
+**One-time setup required before the very first release, since this is a brand-new package name**:
+someone with admin on the `@wave-tech` npm org needs to register this repository + this workflow
+file as this package's trusted publisher on npmjs.com. Depending on what npm currently supports for
+a name that's never been published, that may require publishing `v1.0.0` manually once first (`npm
+publish` with a personal login), then attaching the trusted publisher in that package's npmjs.com
+settings — or it may allow registering a "pending" trusted publisher for the name before it exists.
+Confirm which applies before relying on step 3 below; `npm-publish.yml` will fail with an auth error
+until this is done.
+
 1. Bump `version` in `package.json` following semver (any change to an exported type or a use case's
    behavior is a major version, since consumers compile against these types directly).
 2. Merge to `main`.
