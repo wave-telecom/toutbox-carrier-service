@@ -5,12 +5,6 @@ nothing beyond Toutbox's own wire format: request/response shapes, status-code m
 codes. It has no HTTP server, no database, and no knowledge of any consumer's own domain — it is
 called in-process by whoever integrates with Toutbox (today, `tim-network-adapter`).
 
-This library used to be `toutbox-carrier-service`, a standalone HTTP microservice. It still lives in
-this repository, but no longer runs as a server: all TIM-specific business knowledge that used to
-live here (sender/warehouse identity, sales channel, which resource types are supported, tracking
-code derivation) moved to `tim-network-adapter`, since none of it is actually Toutbox's own wire
-format — it's the caller's business decision about *how* to use Toutbox.
-
 ## Tech stack
 
 | Concern         | Tool                    |

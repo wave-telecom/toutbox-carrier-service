@@ -9,23 +9,9 @@ wrapping Toutbox's own HTTP API — a third-party chip-logistics vendor. It is *
 anymore: it has no server, no routes, no database, and no auth of its own. It exports a small set of
 classes and types that a consumer imports and calls in-process.
 
-**This repository used to be a standalone Fastify microservice** implementing the `CarrierService`-
-facing HTTP contract directly. It was converted into a library because, in practice, every real use
-of Toutbox turned out to be deeply specific to TIM (hardcoded sender/warehouse identity, sales
-channel, which resource types are supported, tracking-code derivation) — none of that is actually
-Toutbox's own wire format, so keeping it here contradicted the whole point of a reusable-beyond-TIM
-integration. That TIM-specific knowledge, and the HTTP layer that used to expose it, now lives in
-`tim-network-adapter` (`integrations/toutbox/carrier-service/`), which depends on this package.
-
-**What this library still owns**: Toutbox's own request/response shapes for its three endpoints
+**What this library owns**: Toutbox's own request/response shapes for its three endpoints
 (create order, cancel, quote shipping), its delivery-status webhook payload shape, and its
-`codOcorrencia` occurrence-code table — genuinely Toutbox's own vocabulary, not TIM's or Wave's.
-
-**What it does not own anymore**: the generic Wave `CarrierCreateDeliveryOrderRequest`/etc. contract
-types (those are `wave-delivery-api`'s and `tim-network-adapter`'s concern), any HTTP server or
-routes, any auth, any call back into `wave-delivery-api` (the webhook-processing orchestration that
-used to live here moved to `tim-network-adapter` in full), and any TIM-specific hardcoded business
-data.
+`codOcorrencia` occurrence-code table — genuinely Toutbox's own vocabulary.
 
 ## Architecture
 
@@ -54,9 +40,7 @@ Each use case class takes a `ToutboxHttpClient` in its constructor and exposes a
 god-class accumulating every operation — `toutbox-http-client.ts` stays limited to transport (base
 URL, auth header) and must never grow a business-shaped method like `createOrder()`.
 
-**The anti-corruption boundary runs the other way now compared to the old service.** Before, this
-repository translated *Wave's* generic contract into Toutbox's wire format. Now it does no
-translation at all — the caller is responsible for handing over an already-Toutbox-shaped payload
+The caller is responsible for handing over an already-Toutbox-shaped payload
 (see each `usecases/<name>/` file's exported request type), and this library's only job is the HTTP
 call and status-code mapping. Never add a mapping function here that takes a non-Toutbox-shaped
 input (a `CarrierCreateDeliveryOrderRequest`, a domain entity, anything with Wave- or TIM-specific
