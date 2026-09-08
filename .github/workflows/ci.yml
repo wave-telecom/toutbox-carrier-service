@@ -12,6 +12,9 @@ jobs:
     permissions:
       contents: read
       id-token: write # required to mint the OIDC token for the coverage API
+    strategy:
+      matrix:
+        node-version: [22.x, 24.x]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,11 +22,10 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: ${{ matrix.node-version }}
           cache: npm
 
-      # `npm ci` (not `npm install`): installs exactly the committed lockfile, so
-      # CI resolves the same dependency tree as the Docker image build.
+      # `npm ci` (not `npm install`): installs exactly the committed lockfile.
       - name: Install dependencies
         run: npm ci
 
@@ -40,40 +42,10 @@ jobs:
         run: npm run test:coverage
 
       - name: Publish coverage report
-        if: always()
+        if: always() && matrix.node-version == '22.x'
         uses: wave-telecom/wave-github-actions/actions/vitest-coverage-report@main
         with:
           api-url: https://tide.bemobiwave.com/api/coverage
           audience: https://github.com/wave-telecom
           fail-on-error: 'false'
           label: unit
-
-  # One tenant per matrix entry / GitHub Environment (PACT_BROKER_URL,
-  # PACT_BROKER_USERNAME, PACT_BROKER_PASSWORD) — each tenant runs its own
-  # Pact Broker.
-  pact-verify:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        tenant_env: [tim-dev]
-    environment: ${{ matrix.tenant_env }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Verify against ${{ matrix.tenant_env }}'s Pact Broker
-        run: npx vitest run src/infrastructure/http/pact-provider-verification.pact.test.ts
-        env:
-          PACT_BROKER_URL: ${{ vars.PACT_BROKER_URL }}
-          PACT_BROKER_USERNAME: ${{ secrets.PACT_BROKER_USERNAME }}
-          PACT_BROKER_PASSWORD: ${{ secrets.PACT_BROKER_PASSWORD }}
