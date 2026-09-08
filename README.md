@@ -22,6 +22,20 @@ called in-process by whoever integrates with Toutbox (today, `tim-network-adapte
 npm install @wave-tech/toutbox-carrier
 ```
 
+Before the first npm publish (see [Publishing a new version](#publishing-a-new-version) below),
+install directly from GitHub instead:
+
+```bash
+npm install github:wave-telecom/toutbox-carrier-service
+```
+
+`dist/` isn't committed (it's gitignored), so a plain git checkout has no build output on its own.
+`npm install` on a git dependency runs this package's own `prepare` script before linking it —
+`prepare` here runs `npm run build`, so installing from GitHub still ends up with a built package,
+exactly like installing from the registry would. Pin a specific commit/tag
+(`github:wave-telecom/toutbox-carrier-service#<sha-or-tag>`) once you need a stable reference rather
+than always tracking `main`.
+
 ## Usage
 
 Each operation is a small class taking a fully Toutbox-shaped payload and returning a

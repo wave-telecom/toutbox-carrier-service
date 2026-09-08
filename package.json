@@ -27,7 +27,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky || true",
+    "prepare": "npm run build && (husky || true)",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
