@@ -1,9 +1,0 @@
-{
-  "results": "ERR",
-  "error": {
-    "message": "Erro ao tentar cadastrar a solicitação de cancelamento"
-  },
-  "payload": null,
-  "tenant": null,
-  "wl": null
-}

@@ -4,7 +4,7 @@ import globals from 'globals';
 
 export default tseslint.config(
   {
-    ignores: ['dist', 'coverage', 'node_modules', 'newrelic.cjs', '**/*.mjs'],
+    ignores: ['dist', 'coverage', 'node_modules', '**/*.mjs'],
   },
   jseslint.configs.recommended,
   tseslint.configs.recommended,
