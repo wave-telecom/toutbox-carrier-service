@@ -1,6 +1,6 @@
 {
   "name": "@wave-tech/toutbox-carrier",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Toutbox's own wire format and API calls (chip-logistics carrier), as a library.",
   "license": "Apache-2.0",
   "private": false,
