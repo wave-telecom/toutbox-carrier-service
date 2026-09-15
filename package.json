@@ -31,7 +31,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@wave-tech/framework": "^0.11.0",
+    "@wave-tech/framework": "0.14.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
