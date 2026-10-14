@@ -31,14 +31,12 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@wave-tech/framework": "0.14.0",
+    "@wave-tech/framework": "^1.0.0",
     "zod": "^4.4.3"
   },
   "overrides": {
-    "mathjs": "^15.2.0",
     "qs": "^6.16.0",
     "uuid": "^11.1.1",
-    "hono": "^4.13.8",
     "deepmerge-ts": "^8.0.2"
   },
   "devDependencies": {
