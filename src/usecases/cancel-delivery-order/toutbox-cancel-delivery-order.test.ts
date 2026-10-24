@@ -7,7 +7,7 @@ function fakeClient(put: (path: string, body: unknown) => Promise<ToutboxHttpRes
 }
 
 describe('ToutboxCancelDeliveryOrder', () => {
-  it('sends { action: "CE", order_id } to Toutbox', async () => {
+  it('sends the cancellation to /api/v1/Parcel/SuspendOrCancel/Single with action CE', async () => {
     let sentPath: string | undefined;
     let sentBody: unknown;
     const useCase = new ToutboxCancelDeliveryOrder(
@@ -24,7 +24,45 @@ describe('ToutboxCancelDeliveryOrder', () => {
     await useCase.execute({ orderId: 'order-42' });
 
     expect(sentPath).toBe('/api/v1/Parcel/SuspendOrCancel/Single');
-    expect(sentBody).toEqual({ action: 'CE', order_id: 'order-42' });
+    expect(sentBody).toMatchObject({ action: 'CE', order_id: 'order-42' });
+  });
+
+  // RSK-DLV-030 / TST-DLV-030-01 - contract section 9.1 spells out nine fields for a
+  // cancellation, `tracking` among them. `tracking` is what says *which* delivery
+  // attempt to cancel: an order can carry more than one codigoRastreio (section 6.2,
+  // re-delivery), so { action, order_id } alone is ambiguous as soon as a second
+  // attempt exists. The fields are sent as `null` when there is nothing to fill them
+  // with - the contract's own example does exactly that.
+  //
+  // `it.fails` because the payload is incomplete today. When the use case starts
+  // sending the full body this test errors out and must become a plain `it`.
+  it.fails('sends the full section 9.1 cancellation payload, tracking included', async () => {
+    let sentBody: Record<string, unknown> | undefined;
+    const useCase = new ToutboxCancelDeliveryOrder(
+      fakeClient(async (_path, body) => {
+        sentBody = body as Record<string, unknown>;
+        return {
+          status: 202,
+          body: { results: 'OK', error: null, payload: { requestSucceeded: true } },
+        };
+      }),
+    );
+
+    await useCase.execute({ orderId: 'order-42' });
+
+    expect(Object.keys(sentBody ?? {}).sort()).toEqual(
+      [
+        'action',
+        'courier_id',
+        'erp_order_id',
+        'mktp_order_id',
+        'nf_key',
+        'nf_number',
+        'order_id',
+        'tracking',
+        'unique_id',
+      ].sort(),
+    );
   });
 
   it('maps a 200 with requestSucceeded:true to a CANCELLING success (Toutbox\'s real "full success" status)', async () => {

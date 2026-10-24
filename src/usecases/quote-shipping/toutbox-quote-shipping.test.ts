@@ -127,6 +127,62 @@ describe('ToutboxQuoteShipping', () => {
     if (!result.ok) expect(result.error.status).toBe(502);
   });
 
+  // RSK-DLV-006 / TST-DLV-006-01 - `valorTotal` outside the expected type silently
+  // collapses to `priceInCents: 0`: the caller cannot tell "shipping is free" from
+  // "Toutbox sent something we could not read". A zero price flows straight to the
+  // sales channel. A quote whose price cannot be read is a failure, not a zero.
+  //
+  // `it.fails` because the fallback is live today. Once the mapper rejects a
+  // non-numeric `valorTotal`, this test errors out and must become a plain `it`.
+  it.fails('fails instead of quoting 0 when valorTotal is not a number', async () => {
+    const useCase = new ToutboxQuoteShipping(
+      fakeClient(async () => ({
+        status: 200,
+        body: { results: 'OK', error: null, payload: [{ valorTotal: '12,34', prazo: 5 }] },
+      })),
+    );
+
+    const result = await useCase.execute(validRequest());
+
+    expect(result.ok).toBe(false);
+  });
+
+  // Same defect on the SLA side of the same payload.
+  it.fails('fails instead of quoting 0 days when prazo is not a number', async () => {
+    const useCase = new ToutboxQuoteShipping(
+      fakeClient(async () => ({
+        status: 200,
+        body: { results: 'OK', error: null, payload: [{ valorTotal: 12.34, prazo: 'cinco' }] },
+      })),
+    );
+
+    const result = await useCase.execute(validRequest());
+
+    expect(result.ok).toBe(false);
+  });
+
+  // RSK-DLV-006 / TST-DLV-006-02 - Toutbox answers its own errors with HTTP 200 and
+  // `results: 'ERR'`, carrying valorTotal 0 / prazo 0 (the spec's own error examples
+  // look exactly like this). Passes today; here as a regression guard, because it is
+  // the case that makes the 0 fallback above indistinguishable from a real quote.
+  it('treats a 200 with results ERR as a failure, never as a 0 quote', async () => {
+    const useCase = new ToutboxQuoteShipping(
+      fakeClient(async () => ({
+        status: 200,
+        body: {
+          results: 'ERR',
+          error: null,
+          payload: [{ valorTotal: 0, prazo: 0, erros: ['CEP nao atendido'] }],
+        },
+      })),
+    );
+
+    const result = await useCase.execute(validRequest());
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.message).toBe('CEP nao atendido');
+  });
+
   it('maps a network-level failure to a 502 without throwing', async () => {
     const useCase = new ToutboxQuoteShipping(
       fakeClient(async () => {
